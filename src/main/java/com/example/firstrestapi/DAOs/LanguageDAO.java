@@ -89,11 +89,9 @@ public class LanguageDAO {
 
     }
     public Optional<List<ProductDTO>> addLanguageProperties(List<ProductDTO> productDTOS, String languageId){
-        Optional optional = Optional.empty();
         List<ProductDTO> withProductTranslation = addProductTranslation(productDTOS,languageId,true);
         List<ProductDTO> withProductAndDetailTranslation = addDetailTranslation(withProductTranslation,languageId,true);
-        optional = optional.of(withProductAndDetailTranslation);
-        return optional;
+        return Optional.of(withProductAndDetailTranslation);
     }
 
 
@@ -102,10 +100,7 @@ public class LanguageDAO {
 
     private List<ProductDTO> addProductTranslation(List<ProductDTO> productDTOS, String languageId, boolean checkData){
         for(ProductDTO product : productDTOS){
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append("SELECT * FROM productTranslation WHERE productId=" + product.getId());
-            stringBuilder.append(" AND languageId = '" + languageId + "'");
-            String sql = stringBuilder.toString();
+            String sql = "SELECT * FROM productTranslation WHERE productId=%s AND languageId='%s'".formatted(product.getId(),languageId);
             try {
                 Statement statement = dbManager.getConnection().createStatement();
                 ResultSet resultSet = statement.executeQuery(sql);
@@ -136,10 +131,7 @@ public class LanguageDAO {
     }
     private List<ProductDTO> addDetailTranslation(List<ProductDTO> productDTOS, String languageId, boolean checkData){
         for(ProductDTO product : productDTOS){
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append("SELECT * FROM detailTranslation WHERE productId=" + product.getId());
-            stringBuilder.append(" AND languageId='" + languageId + "'");
-            String sql = stringBuilder.toString();
+            String sql = "SELECT * FROM detailTranslation WHERE productId=%s AND languageId='%s'".formatted(product.getId(),languageId);
             try{
                 Statement statement = dbManager.getConnection().createStatement();
                 ResultSet resultSet = statement.executeQuery(sql);
@@ -158,7 +150,7 @@ public class LanguageDAO {
                 if(checkData){
                     checkDetailTranslation(product);
                 }
-            }catch (SQLException e){
+            }catch (SQLException ignored){
 
             }
 

@@ -5,6 +5,7 @@ import com.example.firstrestapi.Records.*;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 @Service
 public class LanguageService {
@@ -13,18 +14,24 @@ public class LanguageService {
         return new LanguageDAO().getCategoryTranslationByLanguageId(languageId);
     }
     public Optional<List<LanguageObject>> getLanguagesByLanguageId(String languageId){
-        Optional<HashMap<String,LanguageObject>> languageTranslations = new LanguageDAO().getLanguagesById(languageId);
-        if(languageTranslations.isEmpty()){
+        Optional<HashMap<String,LanguageObject>> foundLanguageTranslations = new LanguageDAO().getLanguagesById(languageId);
+        if(foundLanguageTranslations.isEmpty()){
             return Optional.empty();
         }
-        Optional<HashMap<String,LanguageObject>> fallbackTranslations = new LanguageDAO().getLanguagesById(fallbackLanguage);
-        if(fallbackTranslations.isEmpty()){
+
+        Optional<HashMap<String,LanguageObject>> foundFallbackTranslations = new LanguageDAO().getLanguagesById(fallbackLanguage);
+        if(foundFallbackTranslations.isEmpty()){
             return Optional.empty();
         }
-        HashMap<String,LanguageObject> fallback = fallbackTranslations.get();
-        HashMap<String,LanguageObject> foundTranslations = languageTranslations.get();
+
+        HashMap<String,LanguageObject> fallback = foundFallbackTranslations.get();
+        HashMap<String,LanguageObject> foundTranslations = foundLanguageTranslations.get();
+
         List<LanguageObject> missingLanguages = fallback.values().stream()
-                .map(LanguageObject::langId).map(foundTranslations::get).filter(Objects::isNull).toList();
+                .map(LanguageObject::langId)
+                .filter(Predicate.not(foundTranslations::containsKey))
+                .map(fallback::get)
+                .toList();
 
         List<LanguageObject> translations = new ArrayList<>(foundTranslations.values().stream().toList());
         translations.addAll(missingLanguages);
