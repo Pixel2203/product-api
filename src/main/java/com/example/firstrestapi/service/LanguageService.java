@@ -2,11 +2,9 @@ package com.example.firstrestapi.service;
 import com.example.firstrestapi.DAOs.LanguageDAO;
 import com.example.firstrestapi.DTOs.ProductDTO;
 import com.example.firstrestapi.Records.*;
-import com.example.firstrestapi.api.controller.LanguageController;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class LanguageService {
@@ -15,14 +13,28 @@ public class LanguageService {
         return new LanguageDAO().getCategoryTranslationByLanguageId(languageId);
     }
     public Optional<List<LanguageObject>> getLanguagesByLanguageId(String languageId){
-        Optional optional = new LanguageDAO().getLanguagesById(languageId);
-        return optional;
+        Optional<HashMap<String,LanguageObject>> languageTranslations = new LanguageDAO().getLanguagesById(languageId);
+        if(languageTranslations.isEmpty()){
+            return Optional.empty();
+        }
+        Optional<HashMap<String,LanguageObject>> fallbackTranslations = new LanguageDAO().getLanguagesById(fallbackLanguage);
+        if(fallbackTranslations.isEmpty()){
+            return Optional.empty();
+        }
+        HashMap<String,LanguageObject> fallback = fallbackTranslations.get();
+        HashMap<String,LanguageObject> foundTranslations = languageTranslations.get();
+        List<LanguageObject> missingLanguages = fallback.values().stream()
+                .map(LanguageObject::langId).map(foundTranslations::get).filter(Objects::isNull).toList();
+
+        List<LanguageObject> translations = new ArrayList<>(foundTranslations.values().stream().toList());
+        translations.addAll(missingLanguages);
+        return Optional.of(translations);
     }
     public Optional<List<ProductDTO>> addLanguageDetailsToProduct(List<ProductDTO> productDTOS, String languageId){
         LanguageDAO languageDAO = new LanguageDAO();
         List<ProductDTO> productDTOList = languageDAO.addLanguageProperties(productDTOS,languageId).get()
                 .stream()
-                .filter(product -> product != null)
+                .filter(Objects::nonNull)
                 .toList();
         return Optional.of(productDTOList);
     }

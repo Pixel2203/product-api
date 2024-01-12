@@ -21,11 +21,11 @@ import static com.example.firstrestapi.service.LanguageService.fallbackLanguage;
 
 public class LanguageDAO {
 
-    public Optional<List<LanguageObject>> getLanguagesById(String languageId) {
-        String sql = "SELECT * FROM languageTranslation WHERE id='" + languageId + "'";
-        String getFlagsUrlSql = "SELECT * from flags";
+    public Optional<HashMap<String,LanguageObject>> getLanguagesById(String languageId) {
+        String sql = "SELECT * FROM languageTranslation WHERE id = '" + languageId + "'";
+        String getFlagsUrlSql = "SELECT * FROM flags";
         HashMap<String, String> foundFlags = new HashMap<>();
-
+        HashMap<String, LanguageObject> foundLanguages = new HashMap<>();
         try (Statement statement = dbManager.getConnection().createStatement();
              ResultSet allFlags = statement.executeQuery(getFlagsUrlSql)) {
 
@@ -33,17 +33,16 @@ public class LanguageDAO {
                 foundFlags.put(allFlags.getString("languageId"), allFlags.getString("flagUrl"));
             }
 
-            List<LanguageObject> languageObjects = new ArrayList<>();
-
             try (ResultSet resultSet = statement.executeQuery(sql)) {
                 while (resultSet.next()) {
                     String language = resultSet.getString("language");
                     String flagUrl = foundFlags.getOrDefault(language, null);
-                    languageObjects.add(new LanguageObject(language, resultSet.getString("name"), flagUrl));
+                    foundLanguages.put(language ,new LanguageObject(language, resultSet.getString("name"), flagUrl));
+
                 }
             }
 
-            return Optional.of(languageObjects);
+            return Optional.of(foundLanguages);
 
         } catch (SQLException e) {
             return Optional.empty();
