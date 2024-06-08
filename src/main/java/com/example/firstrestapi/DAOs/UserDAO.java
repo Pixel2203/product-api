@@ -1,19 +1,23 @@
 package com.example.firstrestapi.DAOs;
 
 import com.example.firstrestapi.DTOs.UserDTO;
+import com.example.firstrestapi.Records.Forms.LoginForm;
+import com.example.firstrestapi.Records.Forms.RegisterForm;
+import org.apache.logging.log4j.util.Strings;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.sql.Date;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static com.example.firstrestapi.FirstRestApiApplication.dbManager;
 
 public class UserDAO {
 
-    public Optional<UserDTO> getUser(int id){
-        Optional opt = Optional.empty();
-        String sql = "SELECT * FROM users WHERE id=" + id;
+    public Optional<UserDTO> getUserById(int id){
+        String sql = "SELECT * FROM user WHERE id=%s".formatted(id);
         try{
             Statement stmt = dbManager.getConnection().createStatement();
             ResultSet rs = stmt.executeQuery(sql);
@@ -21,31 +25,100 @@ public class UserDAO {
                 String vorname = rs.getString("vorname");
                 String nachname = rs.getString("nachname");
                 String email = rs.getString("email");
-                UserDTO user = new UserDTO(id,vorname,nachname,email);
+                Date birth = rs.getDate("geburtsdatum");
+                UserDTO user = new UserDTO(id,vorname,nachname,email, Strings.EMPTY ,birth);
 
-                opt = Optional.of(user);
-                System.out.println("Got User data!");
+                return Optional.of(user);
             }
-        }catch (SQLException e){}
-        return opt;
+        }catch (SQLException e){
+            Logger.getLogger("UserDAO").log(Level.SEVERE, "Unable to locate user by id: " + id);
+        }
+        return Optional.empty();
     }
-    public boolean addUser(UserDTO user){
-        String sql =
-                "INSERT INTO users (vorname, nachname , email) VALUES (" +
-                        "'" + user.getVorname() + "'," +
-                        "'" + user.getNachname() + "'," +
-                        "'" + user.getEmail() + "')";
-        try{
-            Statement statement = dbManager.getConnection().createStatement();
-            return statement.execute(sql);
+
+
+    public boolean addUser(RegisterForm form){
+        SimpleDateFormat mysqlDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String sql = "INSERT INTO user (vorname,nachname,email,password,geburtsdatum) VALUES ('%s','%s','%s','%s','%s')".formatted(form.prename(), form.name(), form.email(), form.password(), mysqlDateFormat.format(form.birth()));
+        try (Statement statement = dbManager.getConnection().createStatement()) {
+            return statement.executeUpdate(sql) == 1;
+            //return statement.execute(sql);
         }catch (SQLException e){
             return false;
         }
+    }
+
+    public boolean checkIfUserAlreadyExists(String email) {
+        String sql = "SELECT * FROM user WHERE email='%s'".formatted(email);
+        try (Statement statement = dbManager.getConnection().createStatement()) {
+            return statement.executeQuery(sql).next();
+        }catch (SQLException e){
+            return false;
+        }
+    }
+    public int matchLoginCredentials(LoginForm credentials) {
+        String sql = "SELECT id FROM user WHERE email='%s' AND password='%s'".formatted(credentials.email(),credentials.password());
+        try (Statement statement = dbManager.getConnection().createStatement()) {
+            ResultSet resultSet = statement.executeQuery(sql);
+            if(resultSet.next()){
+                return resultSet.getInt("id");
+            }
+            return 0;
+        }catch (SQLException e){
+            return 0;
+        }
+    }
+
+    public boolean addProductToCart(int uid, int pId) {
+        Optional<Integer> amount = hasProductInCart(uid,pId);
+        String sql;
+        if(amount.isEmpty()){
+            sql =  "INSERT INTO cart (uid,pid,amount) VALUES (%s,%s,1)".formatted(uid,pId);
+        }else {
+            sql = "UPDATE cart SET amount=%s WHERE uid=%s AND pid=%s".formatted(amount.get() + 1 , uid,pId);
+        }
+        try (Statement statement = dbManager.getConnection().createStatement()) {
+            return statement.executeUpdate(sql) == 1;
+            //return statement.execute(sql);
+        }catch (SQLException e){
+            Logger.getLogger("Unable to Add Product to cart!");
+            return false;
+        }
+    }
+
+    private Optional<Integer> hasProductInCart(int uid, int pId){
+        String sql = "SELECT amount FROM cart WHERE uid=%s AND pid=%s".formatted(uid,pId);
+        try(Statement statement = dbManager.getConnection().createStatement()){
+            ResultSet resultSet = statement.executeQuery(sql);
+            if(resultSet.next()){
+                return Optional.of(resultSet.getInt(("amount")));
+            }
+            return Optional.empty();
+        } catch (SQLException e) {
+            return Optional.empty();
+        }
+    }
+    // Pair because it has to return the product id with the corresponding amount for every product in cart
+    public Optional<Map<Integer,Integer>> getProductsInCartByUserId(int uid) {
+        String sql = "SELECT pid,amount FROM cart WHERE uid=%s".formatted(uid);
+        Map<Integer,Integer> result = new HashMap<>();
+        try(Statement statement = dbManager.getConnection().createStatement()) {
+            ResultSet resultSet = statement.executeQuery(sql);
+            while(resultSet.next()){
+                result.put(resultSet.getInt("pid"), resultSet.getInt("amount"));
+            }
+            return Optional.of(result);
+        } catch (SQLException e) {
+            Logger.getLogger("UserDAO").log(Level.SEVERE, "Unable to find Products in cart!");
+            return Optional.empty();
+        }
 
     }
+
+    /*
     public Optional<List<UserDTO>> getAllUsers(){
+
         String sql = "SELECT * FROM users";
-        Optional optional = Optional.empty();
         try{
             Statement statement = dbManager.getConnection().createStatement();
             ResultSet resultSet = statement.executeQuery(sql);
@@ -55,13 +128,13 @@ public class UserDAO {
                         resultSet.getInt("id"),
                         resultSet.getString("vorname"),
                         resultSet.getString("nachname"),
-                        resultSet.getString("email")
+                        resultSet.getString("email"),
+                        resultSet.getDate("geburtsdatum")
                 ));
             }
 
-            optional = Optional.of(userList);
+            return Optional.of(userList);
         }catch (SQLException e){
-
         }
         return optional;
     }
@@ -142,4 +215,6 @@ public class UserDAO {
         }catch (SQLException e){}
         return optional;
     }
+
+     */
 }

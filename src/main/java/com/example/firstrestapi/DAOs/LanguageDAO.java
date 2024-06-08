@@ -50,26 +50,25 @@ public class LanguageDAO {
     }
 
 
-    public Optional<List<Category>> getCategoryTranslationByLanguageId(String languageId){
-        Optional optional = Optional.empty();
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("SELECT * FROM categories WHERE languageId='");
-        stringBuilder.append(languageId + "'");
+    public Optional<HashMap<Integer,Category>> getCategoryTranslationByLanguageId(String languageId){
+
+        String sql = "SELECT * FROM categories,categoryids WHERE languageId = '%s' AND categories.categoryId = categoryids.id".formatted(languageId);
         try{
             Statement statement = dbManager.getConnection().createStatement();
-            ResultSet resultSet = statement.executeQuery(stringBuilder.toString());
-            List<Category> foundCategories = new ArrayList<>();
+            ResultSet resultSet = statement.executeQuery(sql);
+            HashMap<Integer,Category> foundCategories = new HashMap<>();
             while(resultSet.next()){
                 Category category = new Category(
                         resultSet.getInt("categoryId"),
-                        resultSet.getString("name")
+                        resultSet.getString("name"),
+                        resultSet.getString("category_name")
                 );
-                foundCategories.add(category);
+                foundCategories.put(resultSet.getInt("categoryId"),category);
             }
-            optional = Optional.of(foundCategories);
+            return Optional.of(foundCategories);
         }catch (SQLException e){}
 
-        return optional;
+        return Optional.empty();
     }
     public boolean addCategoriesByLanguageId(AddCategoriesRequest request) {
         String languageId = request.languageId();
@@ -142,8 +141,8 @@ public class LanguageDAO {
                     details.add(detail);
                 }
                 details.sort((detail1, detail2) -> {
-                    int length1 = detail1.detailName().length() + detail1.value().length();
-                    int length2 = detail2.detailName().length() + detail2.value().length();
+                    int length1 = detail1.displayName().length() + detail1.value().length();
+                    int length2 = detail2.displayName().length() + detail2.value().length();
                     return Integer.compare(length1, length2);
                 });
                 product.setDetails(details);

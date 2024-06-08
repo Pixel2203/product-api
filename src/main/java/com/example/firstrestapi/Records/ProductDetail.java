@@ -1,4 +1,4 @@
 package com.example.firstrestapi.Records;
 
-public record ProductDetail(String detailName, String value) {
+public record ProductDetail(String displayName, String value) {
 }

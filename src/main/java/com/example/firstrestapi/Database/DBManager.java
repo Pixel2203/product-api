@@ -7,7 +7,7 @@ public class DBManager {
     public void connect() {
         String url = "jdbc:mysql://localhost:3306/CustomDatabase";
         String user = "root";
-        String password = "";
+        String password = "Kaiser.331";
         try {
             this.connection = DriverManager.getConnection(url,user,password);
         } catch (SQLException e){

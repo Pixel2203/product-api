@@ -1,19 +1,46 @@
 package com.example.firstrestapi.service;
 import com.example.firstrestapi.DAOs.LanguageDAO;
+import com.example.firstrestapi.DTOs.CartProductDTO;
 import com.example.firstrestapi.DTOs.ProductDTO;
 import com.example.firstrestapi.Records.*;
+import com.example.firstrestapi.responses.EventResponse;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Service
 public class LanguageService {
+
     public static final String fallbackLanguage = "EN";
-    public Optional<List<Category>> getCategoriesByLanguageId(String languageId){
-        return new LanguageDAO().getCategoryTranslationByLanguageId(languageId);
+
+    public EventResponse<List<Category>> getCategoryEventResponseByLanguageId(String languageId){
+        Optional<List<Category>> foundCategoryTranslations = getCategoriesByLanguageIdWithFallback(languageId);
+        return foundCategoryTranslations
+                .map(categories -> new EventResponse<>(true, "Found Categories!", categories))
+                .orElseGet(() -> new EventResponse<>(false, "Could not retrieve category translations!", null));
     }
-    public Optional<List<LanguageObject>> getLanguagesByLanguageId(String languageId){
+
+    private Optional<List<Category>> getCategoriesByLanguageIdWithFallback(String languageId){
+        Optional<HashMap<Integer,Category>> fallbackCategoriesOptional = new LanguageDAO().getCategoryTranslationByLanguageId(fallbackLanguage);
+        Optional<HashMap<Integer,Category>> foundCategoriesOptional = new LanguageDAO().getCategoryTranslationByLanguageId(languageId);
+
+        if(fallbackCategoriesOptional.isEmpty()){
+            return Optional.empty();
+        }
+        HashMap<Integer,Category> fallbackCategories = fallbackCategoriesOptional.get();
+        HashMap<Integer,Category> foundCategoriesByLanguage = foundCategoriesOptional.orElseGet(HashMap::new);
+
+        List<Category> missingCategoryTranslations = fallbackCategories.keySet()
+                .stream()
+                .filter(categoryId -> Objects.isNull(foundCategoriesByLanguage.get(categoryId))).map(fallbackCategories::get).toList();
+        List<Category> categoryTranslationsWithFallback = new ArrayList<>(foundCategoriesByLanguage.values());
+        categoryTranslationsWithFallback.addAll(missingCategoryTranslations);
+        return Optional.of(categoryTranslationsWithFallback);
+    }
+
+    private Optional<List<LanguageObject>> getLanguagesByLanguageIdWithFallback(String languageId){
         Optional<HashMap<String,LanguageObject>> foundLanguageTranslations = new LanguageDAO().getLanguagesById(languageId);
         if(foundLanguageTranslations.isEmpty()){
             return Optional.empty();
@@ -37,6 +64,7 @@ public class LanguageService {
         translations.addAll(missingLanguages);
         return Optional.of(translations);
     }
+
     public Optional<List<ProductDTO>> addLanguageDetailsToProduct(List<ProductDTO> productDTOS, String languageId){
         LanguageDAO languageDAO = new LanguageDAO();
         List<ProductDTO> productDTOList = languageDAO.addLanguageProperties(productDTOS,languageId).get()
@@ -52,24 +80,25 @@ public class LanguageService {
         }
         return "Categories could not have been added!";
     }
-    public LanguageData getFullLanguagePack(String languageId){
-        final String fallbackLanguage = "EN";
-        Optional<List<Category>> categories = getCategoriesByLanguageId(languageId);
-        Optional<List<LanguageObject>> languages = getLanguagesByLanguageId(languageId);
-        List<Category> categoryList;
-        List<LanguageObject> languageList;
-        if(categories.isPresent() && categories.get().size() > 0){
-            categoryList = categories.get();
-        }else{
-            // Fallback
-            categoryList = getCategoriesByLanguageId(fallbackLanguage).get();
+
+    public EventResponse<HeaderTranslationPack> getHeaderTranslation(String languageId){
+
+        // Category translations
+        Optional<List<Category>> foundCategoriesOptional = getCategoriesByLanguageIdWithFallback(languageId);
+        if(foundCategoriesOptional.isEmpty()){
+            return new EventResponse<>(false, "Unable to fetch categories!", null);
         }
-        if(languages.isPresent() &&  languages.get().size() > 0){
-           languageList = languages.get();
-        }else{
-            languageList = getLanguagesByLanguageId(fallbackLanguage).get();
+        // Language Translation (German --> Deutsch , Spanish --> Spanisch)
+        Optional<List<LanguageObject>> languages = getLanguagesByLanguageIdWithFallback(languageId);
+        if(languages.isEmpty()){
+            return new EventResponse<>(false, "Unable to fetch LanguageTranslations", null);
         }
-        HeaderLangData headerLangData = new HeaderLangData(categoryList,languageList);
-        return new LanguageData(languageId,headerLangData);
+
+        HeaderLangData headerLangData = new HeaderLangData(foundCategoriesOptional.get(),languages.get());
+        return new EventResponse<>(
+                true,
+                "Successfully retrieved languagePack!",
+                new HeaderTranslationPack(languageId,headerLangData));
     }
+
 }

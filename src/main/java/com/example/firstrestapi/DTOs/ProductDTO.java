@@ -6,9 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProductDTO  {
-    private int id;
-    private String img;
-    private int categoryId;
+    private final int id;
+    private final String img;
+    private final int categoryId;
     private String displayName;
     private String displayPrice;
     private List<ProductDetail> details;

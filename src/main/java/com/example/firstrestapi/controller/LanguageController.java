@@ -1,13 +1,13 @@
-package com.example.firstrestapi.api.controller;
+package com.example.firstrestapi.controller;
 
 import com.example.firstrestapi.Records.*;
+import com.example.firstrestapi.responses.EventResponse;
 import com.example.firstrestapi.service.LanguageService;
 import com.mysql.cj.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @CrossOrigin(origins = "http://192.168.178.19:3000,http://localhost:3000")
@@ -20,9 +20,8 @@ public class LanguageController {
     }
 
     @GetMapping("/categories")
-    public List<Category> getCategoryByLanguageId(@RequestParam String languageId){
-        Optional<List<Category>> foundCategories =languageService.getCategoriesByLanguageId(languageId);
-        return foundCategories.orElse(null);
+    public EventResponse<List<Category>> getCategoryByLanguageId(@RequestParam String languageId){
+        return languageService.getCategoryEventResponseByLanguageId(languageId);
     }
     @PostMapping("/addCategories")
     public String addCategoriesFromLanguageId(@RequestBody AddCategoriesRequest request){
@@ -35,8 +34,10 @@ public class LanguageController {
         return languageService.addCategoriesByLanguageId(request);
     }
 
-    @GetMapping("/LanguagePack")
-    public LanguageData getFullLanguagePack(@RequestParam String languageId){
-        return languageService.getFullLanguagePack(languageId);
+    @GetMapping("/Header")
+    @CrossOrigin(origins = "http://192.168.178.19:3000,http://localhost:3000")
+    public EventResponse<HeaderTranslationPack> getHeaderTranslation(@RequestParam String languageId){
+        return languageService.getHeaderTranslation(languageId);
     }
+
 }
