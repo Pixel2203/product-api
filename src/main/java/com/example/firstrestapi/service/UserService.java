@@ -13,16 +13,21 @@ import com.example.firstrestapi.JWT.Token;
 import com.example.firstrestapi.Records.Forms.LoginForm;
 import com.example.firstrestapi.Records.Forms.RegisterForm;
 import com.example.firstrestapi.responses.EventResponse;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 @Service
 public class UserService {
+
+    private static final org.slf4j.Logger log = LoggerFactory.getLogger(UserService.class);
     private final UserDAO agent;
     private final ProductService productService;
     @Autowired
@@ -49,6 +54,7 @@ public class UserService {
     public EventResponse<?> loginUser(LoginForm login) {
         int uId = agent.matchLoginCredentials(login);
         if(uId==0){
+            log.info("Unable to find user {}" , login.email());
             return EventResponse.withoutResult(false, "Unable to find user!");
         }
         Date now = new Date();
@@ -77,39 +83,25 @@ public class UserService {
 
     }
 
-    public EventResponse<?> getUser(String token) {
-        DecodedJWT decodedJWT = (DecodedJWT) verifyJwt(token).result();
-        if(Objects.isNull(decodedJWT)){
-            return EventResponse.failed("Unable to read Authentication Token!");
-        }
-        Optional<UserDTO> foundUser = agent.getUserById(decodedJWT.getClaim("sub").as(Integer.class));
+    public EventResponse<?> getUser(int uid) {
+        Optional<UserDTO> foundUser = agent.getUserById(uid);
         if(foundUser.isEmpty()){
             return EventResponse.failed("Unable to find user!");
         }
         return new EventResponse<>(true, "found user", foundUser.get());
     }
 
-    public EventResponse<?> addToCart(String token, int pId) {
-        DecodedJWT jwt = (DecodedJWT) verifyJwt(token).result();
-        if(Objects.isNull(jwt)){
-            return EventResponse.failed("Unable to verify token!");
-        }
-        int uid = Integer.parseInt(jwt.getSubject());
-        boolean worked = agent.addProductToCart(uid, pId);
+    public EventResponse<?> addToCart(int productId, int userId) {
+        boolean worked = agent.addProductToCart(userId, productId);
         return EventResponse.withoutResult(worked, worked? "Added Product To Cart" : "Unable to add Product");
     }
 
-    public EventResponse<?> getProductsInCart(String token, String lang) {
-        DecodedJWT jwt = (DecodedJWT) verifyJwt(token).result();
-        if(Objects.isNull(jwt)){
-            return EventResponse.failed("Unable to verify Token!");
-        }
-        int uid = Integer.parseInt(jwt.getSubject());
+    public EventResponse<?> getProductsInCart(String language, int uid ) {
         Optional<Map<Integer,Integer>> productIdsInCart = agent.getProductsInCartByUserId(uid);
         if(productIdsInCart.isEmpty()){
             return EventResponse.failed("Unable to find products in cart!");
         }
-        Optional<List<CartProductDTO>> products = productService.getProductsByIds(productIdsInCart.get(), lang);
+        Optional<List<CartProductDTO>> products = productService.getProductsByIds(productIdsInCart.get(), language);
         if(products.isEmpty()){
             return EventResponse.failed("Unable to find products in your cart");
         }

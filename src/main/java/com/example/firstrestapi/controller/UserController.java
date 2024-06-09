@@ -1,7 +1,5 @@
 package com.example.firstrestapi.controller;
 
-import com.auth0.jwt.JWT;
-import com.example.firstrestapi.DTOs.UserDTO;
 import com.example.firstrestapi.Records.Forms.RegisterForm;
 import com.example.firstrestapi.Records.Forms.LoginForm;
 import com.example.firstrestapi.responses.EventResponse;
@@ -9,8 +7,6 @@ import com.example.firstrestapi.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
 
 @RestController
 @CrossOrigin(origins = "http://192.168.178.19:3000,http://localhost:3000")
@@ -24,8 +20,8 @@ public class UserController {
     }
 
     @GetMapping("/user")
-    public EventResponse<?> getUser(@CookieValue("jwt") String token){
-        return service.getUser(token);
+    public EventResponse<?> getUserById(@RequestParam int id){
+        return service.getUser(id);
     }
 
 
@@ -42,13 +38,13 @@ public class UserController {
         return service.loginUser(login);
     }
 
-    @PostMapping(value = "/add_to_cart")
-    public EventResponse<?> addProductToShoppingCart(@RequestHeader(HttpHeaders.AUTHORIZATION) String token, @RequestBody int pId) {
-        return service.addToCart(token, pId);
+    @PutMapping(value = "/add_to_cart")
+    public EventResponse<?> addProductToShoppingCart(@RequestParam int pId, @RequestBody int uId) {
+        return service.addToCart(pId, uId);
     }
     @GetMapping("/cart")
-    public EventResponse<?> getProductsInCart(@RequestHeader(HttpHeaders.AUTHORIZATION) String token, @RequestParam String language){
-        return service.getProductsInCart(token, language);
+    public EventResponse<?> getProductsInCart(@RequestHeader(HttpHeaders.ACCEPT_LANGUAGE) String lang, @RequestHeader("user") int uid){
+        return service.getProductsInCart(lang, uid);
     }
     @GetMapping("/verify")
     public EventResponse<?> verify(@CookieValue("jwt") String token) {

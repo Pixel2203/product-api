@@ -33,7 +33,7 @@ public class ProductController {
         if(request.categoryId() == 9999){
             return "Invalid Category!";
         }
-        if(request.translations().size() == 0){
+        if(request.translations().isEmpty()){
             return "Could not find any translations! Must provide at least one!";
         }
         Optional<String> messageOpt = service.registerProduct(request);
