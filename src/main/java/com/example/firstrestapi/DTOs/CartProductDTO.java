@@ -1,4 +1,6 @@
 package com.example.firstrestapi.DTOs;
 
-public record CartProductDTO(ProductDTO product, int amount) {
+import java.util.Optional;
+
+public record CartProductDTO(ProductDTO product, int amount, Optional<String> totalPrice) {
 }

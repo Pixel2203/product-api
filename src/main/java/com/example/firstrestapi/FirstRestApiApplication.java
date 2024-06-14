@@ -1,6 +1,6 @@
 package com.example.firstrestapi;
 
-import com.example.firstrestapi.DAOs.UserDAO;
+
 import com.example.firstrestapi.Database.DBManager;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

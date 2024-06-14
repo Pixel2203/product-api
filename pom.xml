@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.example</groupId>
-    <artifactId>FirstRestAPI</artifactId>
+    <artifactId>Product-API</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>FirstRestAPI</name>
     <description>FirstRestAPI</description>
@@ -31,11 +31,6 @@
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <version>8.0.32</version>
-        </dependency>
-        <dependency>
-            <groupId>com.auth0</groupId>
-            <artifactId>java-jwt</artifactId>
-            <version>3.3.0</version>
         </dependency>
 
     </dependencies>

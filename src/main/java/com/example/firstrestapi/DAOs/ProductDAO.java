@@ -52,7 +52,7 @@ public class ProductDAO {
                                         pId,
                                         resultSet.getString("imageUrl"),
                                         resultSet.getInt("categoryId"));
-                products.put(pId, new CartProductDTO(product, idAmountMap.get(pId))) ;
+                products.put(pId, new CartProductDTO(product, idAmountMap.get(pId), Optional.empty())) ;
             }
             return Optional.of(products);
         }catch (Exception e){

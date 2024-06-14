@@ -47,7 +47,10 @@ public class ProductService {
             return Optional.empty();
         }
         Map<Integer, CartProductDTO> foundProducts = new HashMap<>();
-        optionalProductsWithLanguage.get().stream().map(productDTO -> new CartProductDTO(productDTO, optionalProducts.get().get(productDTO.getId()).amount()    )).forEach(cartProductDTO -> foundProducts.put(cartProductDTO.product().getId(), cartProductDTO));
+        optionalProductsWithLanguage.get()
+                                    .stream()
+                                    .map(productDTO -> new CartProductDTO(productDTO, optionalProducts.get().get(productDTO.getId()).amount()   , null ))
+                                    .forEach(cartProductDTO -> foundProducts.put(cartProductDTO.product().getId(), cartProductDTO));
 
         return Optional.of(foundProducts.values().stream().toList());
     }
