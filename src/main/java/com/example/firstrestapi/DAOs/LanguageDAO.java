@@ -6,15 +6,16 @@ import com.example.firstrestapi.Records.Category;
 import com.example.firstrestapi.Records.LanguageObject;
 import com.example.firstrestapi.Records.ProductDetail;
 import com.example.firstrestapi.service.ProductService;
+import com.example.firstrestapi.util.PriceHelper;
+import com.example.firstrestapi.util.Utils;
 import com.mysql.cj.util.StringUtils;
+import jakarta.annotation.Nullable;
 
+import javax.swing.plaf.nimbus.State;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static com.example.firstrestapi.FirstRestApiApplication.dbManager;
 import static com.example.firstrestapi.service.LanguageService.fallbackLanguage;
@@ -87,90 +88,53 @@ public class LanguageDAO {
         return true;
 
     }
-    public Optional<List<ProductDTO>> addLanguageProperties(List<ProductDTO> productDTOS, String languageId){
-        List<ProductDTO> withProductTranslation = addProductTranslation(productDTOS,languageId,true);
-        List<ProductDTO> withProductAndDetailTranslation = addDetailTranslation(withProductTranslation,languageId,true);
-        return Optional.of(withProductAndDetailTranslation);
-    }
 
-
-
-
-
-    private List<ProductDTO> addProductTranslation(List<ProductDTO> productDTOS, String languageId, boolean checkData){
+    public List<ProductDTO> addProductTranslation(List<ProductDTO> productDTOS, String languageId, boolean checkData){
+        PriceHelper priceHelper = getPriceInformationForLanguage(languageId);
+        if(Objects.isNull(priceHelper)){
+            priceHelper = new PriceHelper("", "€", false);
+        }
         for(ProductDTO product : productDTOS){
-            String sql = "SELECT * FROM productTranslation WHERE productId=%s AND languageId='%s'".formatted(product.getId(),languageId);
+            String sql = "SELECT * FROM productTranslation,price_mapping WHERE productTranslation.productId=%s AND productTranslation.languageId='%s' AND productTranslation.languageId=price_mapping.country".formatted(product.getId(),languageId);
             try {
                 Statement statement = dbManager.getConnection().createStatement();
                 ResultSet resultSet = statement.executeQuery(sql);
                 if(resultSet.next()){
-                    product.setDisplayPrice(resultSet.getString("displayPrice"));
+                    float price = resultSet.getFloat("displayPrice");
+                    product.setDisplayPrice(priceHelper.buildPrice(price));
                     product.setDisplayName(resultSet.getString("displayName"));
                 }
-                if(checkData){
-                    checkProductTranslation(product);
-                }
             }catch (SQLException e){
-
+                e.printStackTrace();
             }
 
         }
         return productDTOS;
     }
-    private ProductDTO checkProductTranslation(ProductDTO productDTO){
-        // Load fallback
-        ProductDTO fallbackProduct = addProductTranslation(List.of(productDTO),fallbackLanguage,false).get(0);
-        if(StringUtils.isNullOrEmpty(productDTO.getDisplayName())){
-            productDTO.setDisplayName(fallbackProduct.getDisplayName());
-        }
-        if(StringUtils.isNullOrEmpty(productDTO.getDisplayPrice())){
-            productDTO.setDisplayPrice(fallbackProduct.getDisplayPrice());
-        }
-        return productDTO;
-    }
-    private List<ProductDTO> addDetailTranslation(List<ProductDTO> productDTOS, String languageId, boolean checkData){
-        for(ProductDTO product : productDTOS){
-            String sql = "SELECT * FROM detailTranslation WHERE productId=%s AND languageId='%s'".formatted(product.getId(),languageId);
-            try{
-                Statement statement = dbManager.getConnection().createStatement();
-                ResultSet resultSet = statement.executeQuery(sql);
-                List<ProductDetail> details = new ArrayList<>();
-                while(resultSet.next()){
-                    ProductDetail detail = new ProductDetail(resultSet.getString("name"), resultSet.getString("value"));
-
-                    details.add(detail);
-                }
-                details.sort((detail1, detail2) -> {
-                    int length1 = detail1.displayName().length() + detail1.value().length();
-                    int length2 = detail2.displayName().length() + detail2.value().length();
-                    return Integer.compare(length1, length2);
-                });
-                product.setDetails(details);
-                if(checkData){
-                    checkDetailTranslation(product);
-                }
-            }catch (SQLException ignored){
-
+    @Nullable
+    private PriceHelper getPriceInformationForLanguage(String language) {
+        Map<String, String> priceInformation = new HashMap<>();
+        String sql = "SELECT * FROM price_mapping WHERE country='%s'".formatted(language);
+        try {
+            Statement statement = dbManager.getConnection().createStatement();
+            ResultSet resultSet = statement.executeQuery(sql);
+            if(!resultSet.next()){
+                return null;
             }
-
-
-
+            return new PriceHelper(
+                    resultSet.getString("prefix"),
+                    resultSet.getString("suffix"),
+                    Objects.equals(resultSet.getString("use_dot"), "1")
+            );
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        return productDTOS;
+        return null;
     }
-    private ProductDTO checkDetailTranslation(ProductDTO product){
-        ProductDTO productCopy = new ProductDTO(product.getId(),product.getImg(),product.getCategoryId());
-        productCopy.setDetails(product.getDetails());
-        productCopy.setDisplayPrice(product.getDisplayPrice());
-        productCopy.setDisplayName(product.getDisplayName());
-        // Loading Fallback
-        ProductDTO fallbackProduct = addDetailTranslation(List.of(productCopy),fallbackLanguage,false).get(0);
 
-        if(product.getDetails().size() == 0){
-            product.setDetails(fallbackProduct.getDetails());
-        }
-        return fallbackProduct;
-    }
+
+
+
 
 
 }

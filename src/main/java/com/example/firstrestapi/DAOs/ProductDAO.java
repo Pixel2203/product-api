@@ -35,7 +35,7 @@ public class ProductDAO {
             }
             return Optional.of(productDTOS);
         }catch (Exception e){
-            logger.error("Was not able to resolve products by category: " + categoryNameId);
+            logger.error("Was not able to resolve products by category: {}", categoryNameId);
         }
         return Optional.empty();
     }
@@ -52,11 +52,11 @@ public class ProductDAO {
                                         pId,
                                         resultSet.getString("imageUrl"),
                                         resultSet.getInt("categoryId"));
-                products.put(pId, new CartProductDTO(product, idAmountMap.get(pId), Optional.empty())) ;
+                products.put(pId, new CartProductDTO(product, idAmountMap.get(pId), 0f)) ;
             }
             return Optional.of(products);
         }catch (Exception e){
-            logger.error("Was not able to resolve products by ids: " + idAmountMap.keySet());
+            logger.error("Was not able to resolve products by ids: {}", idAmountMap.keySet());
         }
         return Optional.empty();
     }
@@ -71,10 +71,13 @@ public class ProductDAO {
 
 
 
+
+
+
     public Optional<String> registerProductToDatabase(RegisterProductRequest request){
 
         List<ProductLanguageTranslation> translations = request.translations();
-        if(translations.size() == 0){
+        if(translations.isEmpty()){
             return Optional.of("Must Provide at least one translation!");
         }
 
@@ -93,8 +96,7 @@ public class ProductDAO {
             statement.executeUpdate();
             try(ResultSet keys = statement.getGeneratedKeys()){
                 if(keys.next()){
-                    int generatedProductId = (int) keys.getLong(1);
-                    return generatedProductId;
+                    return (int) keys.getLong(1);
                 }
             }
         }catch (SQLException e){
@@ -130,10 +132,10 @@ public class ProductDAO {
             for(ProductDetail detail : translation.details()){
                 StringBuilder stringBuilder = new StringBuilder();
                 stringBuilder.append("INSERT INTO detailTranslation (productId, languageId, name, value) VALUES ('");
-                stringBuilder.append(productId + "','");
-                stringBuilder.append(translation.languageId() + "','");
-                stringBuilder.append(detail.displayName() + "','");
-                stringBuilder.append(detail.value() + "')");
+                stringBuilder.append(productId).append("','");
+                stringBuilder.append(translation.languageId()).append("','");
+                stringBuilder.append(detail.displayName()).append("','");
+                stringBuilder.append(detail.value()).append("')");
                 try{
                     Statement statement = dbManager.getConnection().createStatement();
                     statement.execute(stringBuilder.toString());
@@ -145,8 +147,9 @@ public class ProductDAO {
         return true;
 
     }
-    private List<ProductDetail> getDetailsForProductsByIds(List<Integer> productIds){
-        //String sql = "SELECT".formatted()
-        return List.of();
-    }
+
+
+
+
+
 }

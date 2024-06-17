@@ -12,6 +12,7 @@ public class ProductDTO  {
     private String displayName;
     private String displayPrice;
     private List<ProductDetail> details;
+    private float priceNormal;
     public ProductDTO(int id, String img, int categoryId) {
         this.id = id;
         this.img = img;
@@ -28,6 +29,7 @@ public class ProductDTO  {
     public void setDisplayPrice(String displayPrice) {
         this.displayPrice = displayPrice;
     }
+    public void setPriceNormal(float priceNormal) { this.priceNormal = priceNormal; }
 
     public void setDetails(List<ProductDetail> details) {
         this.details = details;
@@ -55,5 +57,13 @@ public class ProductDTO  {
 
     public int getCategoryId() {
         return categoryId;
+    }
+
+    public static ProductDTO copyFrom(ProductDTO productDTO){
+        ProductDTO dto = new ProductDTO(productDTO.getId(), productDTO.getImg(), productDTO.getCategoryId());
+        dto.setDetails(productDTO.getDetails());
+        dto.setDisplayName(productDTO.getDisplayName());
+        dto.setDisplayPrice(productDTO.getDisplayPrice());
+        return dto;
     }
 }

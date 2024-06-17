@@ -2,6 +2,7 @@ package com.example.firstrestapi.service;
 
 import com.example.firstrestapi.DAOs.ProductDAO;
 import com.example.firstrestapi.DTOs.CartProductDTO;
+import com.example.firstrestapi.DTOs.CartReceipt;
 import com.example.firstrestapi.DTOs.ProductDTO;
 import com.example.firstrestapi.Records.RegisterProductRequest;
 import com.example.firstrestapi.responses.EventResponse;
@@ -47,9 +48,10 @@ public class ProductService {
             return Optional.empty();
         }
         Map<Integer, CartProductDTO> foundProducts = new HashMap<>();
+
         optionalProductsWithLanguage.get()
                                     .stream()
-                                    .map(productDTO -> new CartProductDTO(productDTO, optionalProducts.get().get(productDTO.getId()).amount()   , null ))
+                                    .map(productDTO -> new CartProductDTO(productDTO, optionalProducts.get().get(productDTO.getId()).amount()   , 0f ))
                                     .forEach(cartProductDTO -> foundProducts.put(cartProductDTO.product().getId(), cartProductDTO));
 
         return Optional.of(foundProducts.values().stream().toList());
@@ -64,5 +66,12 @@ public class ProductService {
     public EventResponse<?> getDetailsForProductsByIds(List<Integer> productIds) {
         ProductDAO dao = new ProductDAO();
         return null;
+    }
+    public EventResponse<?> getProductsInCartByIds(Map<Integer,Integer> productIds, String language) {
+        Optional<List<CartProductDTO>> products = getProductsByIds(productIds, language);
+        if(products.isEmpty()){
+            return EventResponse.failed("Unable to find products in your cart");
+        }
+        return new EventResponse<>(true,"Found Products!", products.get());
     }
 }
