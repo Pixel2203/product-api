@@ -1,122 +1,65 @@
 package com.example.firstrestapi.DAOs;
 
 import com.example.firstrestapi.DTOs.ProductDTO;
-import com.example.firstrestapi.Records.AddCategoriesRequest;
-import com.example.firstrestapi.Records.Category;
-import com.example.firstrestapi.Records.LanguageObject;
+import com.example.firstrestapi.Database.DBManager;
 import com.example.firstrestapi.Records.ProductDetail;
 import com.example.firstrestapi.service.ProductService;
 import com.example.firstrestapi.util.PriceHelper;
 import com.example.firstrestapi.util.Utils;
-import com.mysql.cj.util.StringUtils;
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.swing.plaf.nimbus.State;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
 
-import static com.example.firstrestapi.FirstRestApiApplication.dbManager;
-import static com.example.firstrestapi.service.LanguageService.fallbackLanguage;
 
 public class LanguageDAO {
 
-    public Optional<HashMap<String,LanguageObject>> getLanguagesById(String languageId) {
-        String sql = "SELECT * FROM languageTranslation WHERE id = '" + languageId + "'";
-        String getFlagsUrlSql = "SELECT * FROM flags";
-        HashMap<String, String> foundFlags = new HashMap<>();
-        HashMap<String, LanguageObject> foundLanguages = new HashMap<>();
-        try (Statement statement = dbManager.getConnection().createStatement();
-             ResultSet allFlags = statement.executeQuery(getFlagsUrlSql)) {
+    private static final Logger log = LoggerFactory.getLogger(LanguageDAO.class);
 
-            while (allFlags.next()) {
-                foundFlags.put(allFlags.getString("languageId"), allFlags.getString("flagUrl"));
-            }
-
-            try (ResultSet resultSet = statement.executeQuery(sql)) {
-                while (resultSet.next()) {
-                    String language = resultSet.getString("language");
-                    String flagUrl = foundFlags.getOrDefault(language, null);
-                    foundLanguages.put(language ,new LanguageObject(language, resultSet.getString("name"), flagUrl));
-
-                }
-            }
-
-            return Optional.of(foundLanguages);
-
-        } catch (SQLException e) {
-            return Optional.empty();
-        }
-    }
-
-
-    public Optional<HashMap<Integer,Category>> getCategoryTranslationByLanguageId(String languageId){
-
-        String sql = "SELECT * FROM categories,categoryids WHERE languageId = '%s' AND categories.categoryId = categoryids.id".formatted(languageId);
-        try{
-            Statement statement = dbManager.getConnection().createStatement();
-            ResultSet resultSet = statement.executeQuery(sql);
-            HashMap<Integer,Category> foundCategories = new HashMap<>();
-            while(resultSet.next()){
-                Category category = new Category(
-                        resultSet.getInt("categoryId"),
-                        resultSet.getString("name"),
-                        resultSet.getString("category_name")
-                );
-                foundCategories.put(resultSet.getInt("categoryId"),category);
-            }
-            return Optional.of(foundCategories);
-        }catch (SQLException e){}
-
-        return Optional.empty();
-    }
-    public boolean addCategoriesByLanguageId(AddCategoriesRequest request) {
-        String languageId = request.languageId();
-        for(Category category : request.categories()){
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append("INSERT INTO categories (languageId,categoryId,name) VALUES ('");
-            stringBuilder.append(languageId + "', '" + category.id() + "' , '");
-            stringBuilder.append(category.displayName() + "')");
-            try{
-                Statement statement = dbManager.getConnection().createStatement();
-                statement.execute(stringBuilder.toString());
-            }catch (SQLException e){
-                return false;
-            }
-        }
-        return true;
-
-    }
-
-    public List<ProductDTO> addProductTranslation(List<ProductDTO> productDTOS, String languageId, boolean checkData){
+    /**
+     * Injects displayPrice and displayName into the given products
+     * @param productDTOS ProductDTOs which will be modified
+     * @param languageId the language in which it will be translated
+     */
+    public void injectDisplayNameAndPrice(List<ProductDTO> productDTOS, String languageId) throws Exception{
         PriceHelper priceHelper = getPriceInformationForLanguage(languageId);
         if(Objects.isNull(priceHelper)){
             priceHelper = new PriceHelper("", "€", false);
         }
-        for(ProductDTO product : productDTOS){
-            String sql = "SELECT * FROM productTranslation,price_mapping WHERE productTranslation.productId=%s AND productTranslation.languageId='%s' AND productTranslation.languageId=price_mapping.country".formatted(product.getId(),languageId);
-            try {
-                Statement statement = dbManager.getConnection().createStatement();
-                ResultSet resultSet = statement.executeQuery(sql);
-                if(resultSet.next()){
-                    float price = resultSet.getFloat("displayPrice");
-                    product.setDisplayPrice(priceHelper.buildPrice(price));
-                    product.setDisplayName(resultSet.getString("displayName"));
-                }
-            }catch (SQLException e){
-                e.printStackTrace();
-            }
+        List<Integer> productIds = productDTOS.stream().map(ProductDTO::getId).toList();
 
+        String sql = "SELECT * FROM productTranslation WHERE productTranslation.productId IN %s AND productTranslation.languageId='%s'".formatted(Utils.buildIn(productIds),languageId);
+
+
+        Statement statement = ProductService.dbManager.getConnection().createStatement();
+        ResultSet resultSet = statement.executeQuery(sql);
+
+        while(resultSet.next()){
+            int productId = resultSet.getInt("productId");
+            String displayName = resultSet.getString("displayName");
+            float price = resultSet.getFloat("displayPrice");
+            String displayPrice = priceHelper.buildPrice(price);
+
+            productDTOS.stream().filter(productDTO -> productDTO.getId() == productId).forEach(productDTO -> {
+                productDTO.setDisplayName(displayName);
+                productDTO.setDisplayPrice(displayPrice);
+            });
         }
-        return productDTOS;
+
     }
+
     @Nullable
-    private PriceHelper getPriceInformationForLanguage(String language) {
+    public PriceHelper getPriceInformationForLanguage(String language) {
         Map<String, String> priceInformation = new HashMap<>();
         String sql = "SELECT * FROM price_mapping WHERE country='%s'".formatted(language);
         try {
-            Statement statement = dbManager.getConnection().createStatement();
+            Statement statement = ProductService.dbManager.getConnection().createStatement();
             ResultSet resultSet = statement.executeQuery(sql);
             if(!resultSet.next()){
                 return null;
@@ -130,6 +73,24 @@ public class LanguageDAO {
             e.printStackTrace();
         }
         return null;
+    }
+    @Nonnull
+    public List<ProductDetail> getProductDetailsByProductIdAndLanguageId(int productId, String languageId){
+        String sql = "SELECT * FROM detailTranslation WHERE productId=%s AND languageId='%s'".formatted(productId, languageId);
+        try {
+            ResultSet resultSet;
+            Statement statement = ProductService.dbManager.getConnection().createStatement();
+            resultSet = statement.executeQuery(sql);
+            List<ProductDetail> details = new ArrayList<>();
+            while (resultSet.next()) {
+                ProductDetail detail = new ProductDetail(resultSet.getString("name"), resultSet.getString("value"));
+                details.add(detail);
+            }
+            return details;
+        } catch (SQLException ignored) {
+            log.error("Unable to load product details for product {}" , productId);
+        }
+        return List.of();
     }
 
 

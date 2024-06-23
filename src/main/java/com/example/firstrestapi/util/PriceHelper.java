@@ -1,8 +1,8 @@
 package com.example.firstrestapi.util;
 
 import com.mysql.cj.util.StringUtils;
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -19,7 +19,7 @@ public class PriceHelper {
         this.useDot = use_dot;
     }
 
-    @NotNull
+    @Nonnull
     public String buildPrice(float price){
         String displayPrice = String.valueOf(decimalFormat.format(price));
         if(!StringUtils.isNullOrEmpty(prefix)) {

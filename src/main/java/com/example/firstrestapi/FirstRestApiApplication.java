@@ -9,9 +9,7 @@ import java.sql.SQLException;
 
 @SpringBootApplication
 public class FirstRestApiApplication {
-    public static final DBManager dbManager = new DBManager();
     public static void main(String[] args){
-        dbManager.connect();
         SpringApplication.run(FirstRestApiApplication.class, args);
     }
 
