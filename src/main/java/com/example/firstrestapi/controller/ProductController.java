@@ -24,6 +24,12 @@ public class ProductController {
         this.productService = service;
     }
 
+    /**
+     * Returns ProductTeaser objects for the given category
+     * @param categoryId
+     * @param language
+     * @return
+     */
     @GetMapping ("/products/{categoryId}")
     public EventResponse<?> getProductsByCategory(@PathVariable String categoryId, @RequestParam String language){
         log.info("Got request to getProductsByCategory for categoryId={} and language={}", categoryId, language);
@@ -35,5 +41,16 @@ public class ProductController {
             @RequestHeader(HttpHeaders.ACCEPT_LANGUAGE) String lang,
             @RequestBody Map<Integer, Integer> productIds){
         return productService.getProductsByIdsWithFallback(productIds, lang);
+    }
+
+    /**
+     * Returns a Product Object for the given productId
+     * @param productId ProductId of the wanted product from the database
+     * @param language Desired Language of the product
+     * @return
+     */
+    @GetMapping("/products/product/{productId}")
+    public EventResponse<?> getProductById(@PathVariable int productId, @RequestParam String language){
+        return productService.getProductById(productId,language);
     }
 }

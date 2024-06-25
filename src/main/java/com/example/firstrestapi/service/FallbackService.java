@@ -1,12 +1,10 @@
 package com.example.firstrestapi.service;
 
 import com.example.firstrestapi.DAOs.LanguageDAO;
-import com.example.firstrestapi.DTOs.ProductDTO;
-import com.example.firstrestapi.util.PriceHelper;
+import com.example.firstrestapi.DTOs.ProductTeaser;
 import com.mysql.cj.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,10 +15,10 @@ import static com.example.firstrestapi.service.LanguageService.fallbackLanguage;
 public class FallbackService {
     private static final Logger log = LoggerFactory.getLogger(FallbackService.class);
 
-    public void checkAndFallbackProductNameAndPrice(ProductDTO productDTO){
+    public void checkAndFallbackProductNameAndPrice(ProductTeaser productTeaser){
 
         //detailService.addTranslatedDetailsWithFallback(List.of(productDTO),fallbackLanguage, false);
-        ProductDTO fallbackProduct = ProductDTO.copyFrom(productDTO);
+        ProductTeaser fallbackProduct = ProductTeaser.copyFrom(productTeaser);
         LanguageDAO languageDAO = new LanguageDAO();
 
         try {
@@ -29,11 +27,11 @@ public class FallbackService {
         } catch (Exception e) {
             log.error("Unable to inject fallback product name and price", e);
         }
-        if(StringUtils.isNullOrEmpty(productDTO.getDisplayName())){
-            productDTO.setDisplayName(fallbackProduct.getDisplayName());
+        if(StringUtils.isNullOrEmpty(productTeaser.getDisplayName())){
+            productTeaser.setDisplayName(fallbackProduct.getDisplayName());
         }
-        if(StringUtils.isNullOrEmpty(productDTO.getDisplayPrice())){
-            productDTO.setDisplayPrice(fallbackProduct.getDisplayPrice());
+        if(StringUtils.isNullOrEmpty(productTeaser.getDisplayPrice())){
+            productTeaser.setDisplayPrice(fallbackProduct.getDisplayPrice());
         }
     }
 }

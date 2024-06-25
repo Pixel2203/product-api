@@ -1,7 +1,6 @@
 package com.example.firstrestapi.DAOs;
 
-import com.example.firstrestapi.DTOs.ProductDTO;
-import com.example.firstrestapi.Database.DBManager;
+import com.example.firstrestapi.DTOs.ProductTeaser;
 import com.example.firstrestapi.Records.ProductDetail;
 import com.example.firstrestapi.service.ProductService;
 import com.example.firstrestapi.util.PriceHelper;
@@ -10,7 +9,6 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -24,15 +22,15 @@ public class LanguageDAO {
 
     /**
      * Injects displayPrice and displayName into the given products
-     * @param productDTOS ProductDTOs which will be modified
+     * @param productTeasers ProductDTOs which will be modified
      * @param languageId the language in which it will be translated
      */
-    public void injectDisplayNameAndPrice(List<ProductDTO> productDTOS, String languageId) throws Exception{
+    public void injectDisplayNameAndPrice(List<ProductTeaser> productTeasers, String languageId) throws Exception{
         PriceHelper priceHelper = getPriceInformationForLanguage(languageId);
         if(Objects.isNull(priceHelper)){
             priceHelper = new PriceHelper("", "€", false);
         }
-        List<Integer> productIds = productDTOS.stream().map(ProductDTO::getId).toList();
+        List<Integer> productIds = productTeasers.stream().map(ProductTeaser::getId).toList();
 
         String sql = "SELECT * FROM productTranslation WHERE productTranslation.productId IN %s AND productTranslation.languageId='%s'".formatted(Utils.buildIn(productIds),languageId);
 
@@ -46,7 +44,7 @@ public class LanguageDAO {
             float price = resultSet.getFloat("displayPrice");
             String displayPrice = priceHelper.buildPrice(price);
 
-            productDTOS.stream().filter(productDTO -> productDTO.getId() == productId).forEach(productDTO -> {
+            productTeasers.stream().filter(productDTO -> productDTO.getId() == productId).forEach(productDTO -> {
                 productDTO.setDisplayName(displayName);
                 productDTO.setDisplayPrice(displayPrice);
             });

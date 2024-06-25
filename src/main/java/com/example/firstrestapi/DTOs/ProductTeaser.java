@@ -5,21 +5,21 @@ import com.example.firstrestapi.Records.ProductDetail;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProductDTO  {
-    private final int id;
-    private final String img;
-    private final int categoryId;
+public class ProductTeaser extends BaseProduct {
+
+
+
     private String displayName;
     private String displayPrice;
     private List<ProductDetail> details;
-    private float priceNormal;
-    public ProductDTO(int id, String img, int categoryId) {
-        this.id = id;
-        this.img = img;
-        this.categoryId = categoryId;
+    public ProductTeaser(int id, String teaserImage, int categoryId) {
+        super(id, teaserImage, categoryId);
         displayName = "";
         displayPrice = "";
         details = new ArrayList<>();
+    }
+    public ProductTeaser(BaseProduct baseProduct) {
+        this(baseProduct.getId(), baseProduct.getTeaserImage(), baseProduct.getCategoryId());
     }
 
     public void setDisplayName(String displayName) {
@@ -29,7 +29,6 @@ public class ProductDTO  {
     public void setDisplayPrice(String displayPrice) {
         this.displayPrice = displayPrice;
     }
-    public void setPriceNormal(float priceNormal) { this.priceNormal = priceNormal; }
 
     public void setDetails(List<ProductDetail> details) {
         this.details = details;
@@ -39,9 +38,7 @@ public class ProductDTO  {
         return details;
     }
 
-    public String getImg() {
-        return img;
-    }
+
 
     public String getDisplayPrice() {
         return displayPrice;
@@ -51,19 +48,13 @@ public class ProductDTO  {
         return displayName;
     }
 
-    public int getId() {
-        return id;
-    }
 
-    public int getCategoryId() {
-        return categoryId;
-    }
 
-    public static ProductDTO copyFrom(ProductDTO productDTO){
-        ProductDTO dto = new ProductDTO(productDTO.getId(), productDTO.getImg(), productDTO.getCategoryId());
-        dto.setDetails(productDTO.getDetails());
-        dto.setDisplayName(productDTO.getDisplayName());
-        dto.setDisplayPrice(productDTO.getDisplayPrice());
+    public static ProductTeaser copyFrom(ProductTeaser productTeaser){
+        ProductTeaser dto = new ProductTeaser(productTeaser.getId(), productTeaser.getTeaserImage(), productTeaser.getCategoryId());
+        dto.setDetails(productTeaser.getDetails());
+        dto.setDisplayName(productTeaser.getDisplayName());
+        dto.setDisplayPrice(productTeaser.getDisplayPrice());
         return dto;
     }
 }

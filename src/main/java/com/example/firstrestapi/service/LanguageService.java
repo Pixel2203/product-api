@@ -1,8 +1,7 @@
 package com.example.firstrestapi.service;
 import com.example.firstrestapi.DAOs.LanguageDAO;
-import com.example.firstrestapi.DTOs.ProductDTO;
-import com.example.firstrestapi.Records.*;
-import com.example.firstrestapi.util.PriceHelper;
+import com.example.firstrestapi.DTOs.BaseProduct;
+import com.example.firstrestapi.DTOs.ProductTeaser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,29 +23,31 @@ public class LanguageService {
         this.fallbackService = fallbackService;
     }
 
-    public Optional<List<ProductDTO>> getProductsWithFullTranslation(List<ProductDTO> productDTOS, String languageId){
+    public Optional<List<ProductTeaser>> getProductsWithFullTranslation(List<BaseProduct> baseProducts, String languageId){
+        List<ProductTeaser> productTeasers = baseProducts.stream().map(ProductTeaser::new).toList();
+
         // Adds displayName and displayPrice without fallback
-        injectDisplayPriceAndDisplayNameIntoProducts(productDTOS, languageId);
+        injectDisplayPriceAndDisplayNameIntoProducts(productTeasers, languageId);
 
         // fallback for displayName and displayPrice
-        productDTOS.forEach(fallbackService::checkAndFallbackProductNameAndPrice);
+        productTeasers.forEach(fallbackService::checkAndFallbackProductNameAndPrice);
 
         // Add details to product without fallback
-        detailService.injectTranslatedDetailsIntoProducts(productDTOS,languageId);
+        detailService.injectTranslatedDetailsIntoProducts(productTeasers,languageId);
         // Adds fallback details if needed
-        productDTOS.forEach(detailService::checkFallbackDetailTranslation);
+        productTeasers.forEach(detailService::checkFallbackDetailTranslation);
 
-        List<ProductDTO> productDTOList = productDTOS
+        List<ProductTeaser> productTeaserList = productTeasers
                 .stream()
                 .filter(Objects::nonNull)
                 .toList();
-        return Optional.of(productDTOList);
+        return Optional.of(productTeaserList);
     }
 
-    private void injectDisplayPriceAndDisplayNameIntoProducts(List<ProductDTO> productDTOS, String languageId) {
+    private void injectDisplayPriceAndDisplayNameIntoProducts(List<ProductTeaser> productTeasers, String languageId) {
         LanguageDAO languageDAO = new LanguageDAO();
         try {
-            languageDAO.injectDisplayNameAndPrice(productDTOS,languageId);
+            languageDAO.injectDisplayNameAndPrice(productTeasers,languageId);
         } catch (Exception e) {
             log.error("Unable to inject product translation for language {}", languageId);
         }

@@ -1,8 +1,11 @@
 package com.example.firstrestapi.service;
 
 import com.example.firstrestapi.DAOs.ProductDAO;
+import com.example.firstrestapi.DAOs.ProductMongoDAO;
+import com.example.firstrestapi.DTOs.BaseProduct;
 import com.example.firstrestapi.DTOs.CartProductDTO;
-import com.example.firstrestapi.DTOs.ProductDTO;
+import com.example.firstrestapi.DTOs.Product;
+import com.example.firstrestapi.DTOs.ProductTeaser;
 import com.example.firstrestapi.Database.DBManager;
 import com.example.firstrestapi.Records.RegisterProductRequest;
 import com.example.firstrestapi.responses.EventResponse;
@@ -13,15 +16,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
     private static final Logger log = LoggerFactory.getLogger(ProductService.class);
     private LanguageService languageService;
     public static DBManager dbManager;
+    private ProductMongoDAO productMongoDAO;
+
     @Autowired
-    public ProductService(LanguageService languageService, DBManager dbManager) {
+    public ProductService(LanguageService languageService, DBManager dbManager, ProductMongoDAO productMongoDAO) {
         this.languageService = languageService;
+        this.productMongoDAO = productMongoDAO;
         ProductService.dbManager = dbManager;
         ProductService.dbManager.connect();
     }
@@ -34,11 +41,11 @@ public class ProductService {
      */
     public EventResponse<?> getProductsByCategoryAndLanguage(String categoryId, String languageId){
         ProductDAO productDAO = new ProductDAO();
-        Optional<List<ProductDTO>> optionalProducts = productDAO.getProductsByCategory(categoryId);
+        Optional<List<BaseProduct>> optionalProducts = productDAO.getProductsByCategory(categoryId);
         if(optionalProducts.isEmpty()){
             return EventResponse.failed("Unable to get products by category and language!");
         }
-        Optional<List<ProductDTO>> optionalProductsWithLanguage = languageService.getProductsWithFullTranslation(optionalProducts.get(), languageId);
+        Optional<List<ProductTeaser>> optionalProductsWithLanguage = languageService.getProductsWithFullTranslation(optionalProducts.get(), languageId);
         if(optionalProductsWithLanguage.isPresent()){
             return new EventResponse<>(true, "Successfully collected products!", optionalProductsWithLanguage.get());
         }
@@ -63,15 +70,16 @@ public class ProductService {
      */
     public EventResponse<?> getProductsByIdsWithFallback(Map<Integer,Integer> productIds, String language) {
         ProductDAO productDAO = new ProductDAO();
-        Optional<List<ProductDTO>> productsInCartWithoutTranslation = productDAO.getProductsByIdsWithoutDetails(productIds.keySet()
+        Optional<List<BaseProduct>> baseProductsInCart = productDAO.getBaseProducts(productIds.keySet()
                 .stream()
                 .toList());
 
-        if(productsInCartWithoutTranslation.isEmpty()){
+        if(baseProductsInCart.isEmpty()){
             return EventResponse.failed("Unable to find products!");
         }
+
         // Adds Details
-        var translatedProducts = languageService.getProductsWithFullTranslation(productsInCartWithoutTranslation.get(), language);
+        var translatedProducts = languageService.getProductsWithFullTranslation(baseProductsInCart.get(), language);
 
         if(translatedProducts.isEmpty()){
             log.error("Unable to add product translations for ids {}", productIds.keySet());
@@ -83,16 +91,44 @@ public class ProductService {
     }
 
     /**
+     *
+     * @param productId ProductId of the desired product
+     * @param languageId languageId of the language in which the product will be translated to
+     * @return EventResponse of Product Object
+     */
+    public EventResponse<?> getProductById(int productId, String languageId) {
+        ProductDAO productDAO = new ProductDAO();
+        var baseProduct = productDAO.getBaseProducts(List.of(productId));
+        if(baseProduct.isEmpty()){
+            log.warn("Unable to find product with id {}", productId);
+            return EventResponse.failed("Unable to find product!");
+        }
+
+        Optional<List<ProductTeaser>> translatedProduct = languageService.getProductsWithFullTranslation(baseProduct.get(), languageId);
+        if(translatedProduct.isEmpty() || translatedProduct.get().isEmpty()){
+            log.error("Unable to translate product with id {}", productId);
+            return EventResponse.failed("Unable to translate product!");
+        }
+        Product translatedProductWithoutRatingsAndImages = Product.of(translatedProduct.get().get(0));
+        this.productMongoDAO.injectExtendedProductInfoIntoProduct(translatedProductWithoutRatingsAndImages);
+        return new EventResponse<>(true, "Successfully got product", translatedProductWithoutRatingsAndImages);
+
+    }
+
+
+    /**
      * Combines the regular Product Information with the amount of products in cart
      * @param productIdAmountMap productId to amount map <ID,AMOUNT>
      * @param products Product Information which will be combined
      * @return List of CartProductDTO containing amount and productInfo
      */
     @Nonnull
-    private List<CartProductDTO> combineAmountWithProducts(Map<Integer,Integer> productIdAmountMap, List<ProductDTO> products) {
+    private List<CartProductDTO> combineAmountWithProducts(Map<Integer,Integer> productIdAmountMap, List<ProductTeaser> products) {
         return products.stream()
                 .filter(productDTO -> productIdAmountMap.containsKey(productDTO.getId()))
                 .map(productDTO -> new CartProductDTO(productDTO, productIdAmountMap.get(productDTO.getId())))
                 .toList();
     }
+
+
 }

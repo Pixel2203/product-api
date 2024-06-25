@@ -1,8 +1,7 @@
 package com.example.firstrestapi.DAOs;
 
-import com.example.firstrestapi.DTOs.CartProductDTO;
-import com.example.firstrestapi.DTOs.ProductDTO;
-import com.example.firstrestapi.Database.DBManager;
+import com.example.firstrestapi.DTOs.BaseProduct;
+import com.example.firstrestapi.DTOs.ProductTeaser;
 import com.example.firstrestapi.Records.ProductLanguageTranslation;
 import com.example.firstrestapi.Records.ProductDetail;
 import com.example.firstrestapi.Records.RegisterProductRequest;
@@ -21,21 +20,21 @@ import java.util.*;
 public class ProductDAO {
 
     Logger logger = LoggerFactory.getLogger(ProductDAO.class);
-    public Optional<List<ProductDTO>> getProductsByCategory(String categoryNameId){
+    public Optional<List<BaseProduct>> getProductsByCategory(String categoryNameId){
         try {
             String sql = "SELECT products.id, products.imageUrl, products.categoryId FROM products,categoryids WHERE categoryids.category_name = '%s' AND categoryids.id = products.categoryId".formatted(categoryNameId);
             Statement statement = ProductService.dbManager.getConnection().createStatement();
             ResultSet resultSet = statement.executeQuery(sql);
-            List<ProductDTO> productDTOS = new ArrayList<>();
+            List<BaseProduct> baseProducts = new ArrayList<>();
             while(resultSet.next()){
-                ProductDTO productDTO = new ProductDTO(
+                BaseProduct baseProduct = new BaseProduct(
                         resultSet.getInt("id"),
                         resultSet.getString("imageUrl"),
                         resultSet.getInt("categoryId")
                 );
-                productDTOS.add(productDTO);
+                baseProducts.add(baseProduct);
             }
-            return Optional.of(productDTOS);
+            return Optional.of(baseProducts);
         }catch (Exception e){
             logger.error("Was not able to resolve products by category: {}", categoryNameId);
         }
@@ -67,17 +66,17 @@ public class ProductDAO {
     }
 
      */
-    public Optional<List<ProductDTO>> getProductsByIdsWithoutDetails(List<Integer> productIds){
+    public Optional<List<BaseProduct>> getBaseProducts(List<Integer> productIds){
         try {
             String in = Utils.buildIn(productIds);
             String sql = "SELECT products.id, products.imageUrl, products.categoryId FROM products WHERE id IN %s".formatted(in);
             ResultSet resultSet;
             Statement statement = ProductService.dbManager.getConnection().createStatement();
             resultSet = statement.executeQuery(sql);
-            List<ProductDTO> products = new ArrayList<>();
+            List<BaseProduct> products = new ArrayList<>();
             while(resultSet.next()){
                 int pId = resultSet.getInt("id");
-                ProductDTO product = new ProductDTO(
+                BaseProduct product = new BaseProduct(
                         resultSet.getInt("id"),
                         resultSet.getString("imageUrl"),
                         resultSet.getInt("categoryId"));

@@ -1,13 +1,11 @@
 package com.example.firstrestapi.DTOs;
 
-import java.util.Optional;
-
 public class CartProductDTO{
-    private final ProductDTO product;
+    private final ProductTeaser product;
     private final int amount;
     private float totalPrice;
 
-    public ProductDTO getProduct() {
+    public ProductTeaser getProduct() {
         return product;
     }
 
@@ -19,12 +17,12 @@ public class CartProductDTO{
         return amount;
     }
 
-    public CartProductDTO(ProductDTO product, int amount, float totalPrice){
+    public CartProductDTO(ProductTeaser product, int amount, float totalPrice){
         this.product = product;
         this.amount = amount;
         this.totalPrice = totalPrice;
     }
-    public CartProductDTO(ProductDTO product , int amount){
+    public CartProductDTO(ProductTeaser product , int amount){
         this.product = product;
         this.amount = amount;
     }

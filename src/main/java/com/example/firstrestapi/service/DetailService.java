@@ -1,7 +1,7 @@
 package com.example.firstrestapi.service;
 
 import com.example.firstrestapi.DAOs.LanguageDAO;
-import com.example.firstrestapi.DTOs.ProductDTO;
+import com.example.firstrestapi.DTOs.ProductTeaser;
 import com.example.firstrestapi.Database.DBManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,9 +19,9 @@ public class DetailService {
     }
 
 
-    public void injectTranslatedDetailsIntoProducts(List<ProductDTO> productDTOS, String languageId) {
+    public void injectTranslatedDetailsIntoProducts(List<ProductTeaser> productTeasers, String languageId) {
         LanguageDAO languageDAO = new LanguageDAO();
-        for (ProductDTO product : productDTOS) {
+        for (ProductTeaser product : productTeasers) {
             var details = languageDAO.getProductDetailsByProductIdAndLanguageId(product.getId(), languageId);
             if(details.isEmpty()) { continue; }
             details.sort((detail1, detail2) -> {
@@ -33,13 +33,13 @@ public class DetailService {
         }
     }
 
-    public void checkFallbackDetailTranslation(ProductDTO product){
+    public void checkFallbackDetailTranslation(ProductTeaser product){
         if(!product.getDetails().isEmpty()){
             // Already has details - no need for fallback
             return;
         }
         // Loading Fallback
-        ProductDTO productCopy = ProductDTO.copyFrom(product);
+        ProductTeaser productCopy = ProductTeaser.copyFrom(product);
         injectTranslatedDetailsIntoProducts(List.of(productCopy),fallbackLanguage);
         product.setDetails(productCopy.getDetails());
 
