@@ -1,6 +1,5 @@
 package com.example.firstrestapi.service;
 
-import com.example.firstrestapi.DAOs.LanguageDAO;
 import com.example.firstrestapi.DAOs.ProductDAO;
 import com.example.firstrestapi.DAOs.ProductMongoDAO;
 import com.example.firstrestapi.DTOs.BaseProduct;
@@ -22,13 +21,13 @@ import java.util.*;
 @Service
 public class ProductService {
     private static final Logger log = LoggerFactory.getLogger(ProductService.class);
-    private LanguageService languageService;
+    private final LanguageHandler languageHandler;
     public static DBManager dbManager;
-    private ProductMongoDAO productMongoDAO;
+    private final ProductMongoDAO productMongoDAO;
 
     @Autowired
-    public ProductService(LanguageService languageService, DBManager dbManager, ProductMongoDAO productMongoDAO) {
-        this.languageService = languageService;
+    public ProductService(DBManager dbManager, ProductMongoDAO productMongoDAO) {
+        this.languageHandler = LanguageHandler.getInstance();
         this.productMongoDAO = productMongoDAO;
         ProductService.dbManager = dbManager;
         ProductService.dbManager.connect();
@@ -46,7 +45,7 @@ public class ProductService {
         if(optionalProducts.isEmpty()){
             return EventResponse.failed("Unable to get products by category and language!");
         }
-        Optional<List<ProductTeaser>> optionalProductsWithLanguage = languageService.getProductsWithFullTranslation(optionalProducts.get(), languageId);
+        Optional<List<ProductTeaser>> optionalProductsWithLanguage = languageHandler.getProductsWithFullTranslation(optionalProducts.get(), languageId);
         if(optionalProductsWithLanguage.isPresent()){
             return new EventResponse<>(true, "Successfully collected products!", optionalProductsWithLanguage.get());
         }
@@ -60,7 +59,6 @@ public class ProductService {
      */
     public Optional<String> registerProduct(RegisterProductRequest request) {
         return new ProductDAO().registerProductToDatabase(request);
-
     }
 
     /**
@@ -80,7 +78,7 @@ public class ProductService {
         }
 
         // Adds Details
-        var translatedProducts = languageService.getProductsWithFullTranslation(baseProductsInCart.get(), language);
+        var translatedProducts = languageHandler.getProductsWithFullTranslation(baseProductsInCart.get(), language);
 
         if(translatedProducts.isEmpty()){
             log.error("Unable to add product translations for ids {}", productIds.keySet());
@@ -92,7 +90,7 @@ public class ProductService {
         // Format DisplayPrice Total
         cartProductsWithoutTotalPrice.forEach(cartProduct -> {
             String languageModel = cartProduct.getProduct().getLanguageModel();
-            PriceHelper helper = languageService.getPriceHelperByLanguage(languageModel);
+            PriceHelper helper = languageHandler.getPriceHelperByLanguage(languageModel);
             cartProduct.formatTotalDisplayPrice(helper);
         });
         return new EventResponse<>(true, "Found them!" , cartProductsWithoutTotalPrice);
@@ -112,7 +110,7 @@ public class ProductService {
             return EventResponse.failed("Unable to find product!");
         }
 
-        Optional<List<ProductTeaser>> translatedProduct = languageService.getProductsWithFullTranslation(baseProduct.get(), languageId);
+        Optional<List<ProductTeaser>> translatedProduct = languageHandler.getProductsWithFullTranslation(baseProduct.get(), languageId);
         if(translatedProduct.isEmpty() || translatedProduct.get().isEmpty()){
             log.error("Unable to translate product with id {}", productId);
             return EventResponse.failed("Unable to translate product!");
