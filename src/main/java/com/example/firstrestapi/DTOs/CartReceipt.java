@@ -1,4 +1,4 @@
 package com.example.firstrestapi.DTOs;
 
-public record CartReceipt(CartProductDTO[] products, float totalPrice) {
+public record CartReceipt(CartProduct[] products, float totalPrice) {
 }

@@ -2,6 +2,7 @@ package com.example.firstrestapi.service;
 import com.example.firstrestapi.DAOs.LanguageDAO;
 import com.example.firstrestapi.DTOs.BaseProduct;
 import com.example.firstrestapi.DTOs.ProductTeaser;
+import com.example.firstrestapi.util.PriceHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,10 +48,15 @@ public class LanguageService {
     private void injectDisplayPriceAndDisplayNameIntoProducts(List<ProductTeaser> productTeasers, String languageId) {
         LanguageDAO languageDAO = new LanguageDAO();
         try {
-            languageDAO.injectDisplayNameAndPrice(productTeasers,languageId);
+            languageDAO.injectPriceAndName(productTeasers,languageId);
         } catch (Exception e) {
             log.error("Unable to inject product translation for language {}", languageId);
         }
+    }
+
+    public PriceHelper getPriceHelperByLanguage(String language){
+        LanguageDAO languageDAO = new LanguageDAO();
+        return languageDAO.getPriceInformationForLanguage(language);
     }
 
 

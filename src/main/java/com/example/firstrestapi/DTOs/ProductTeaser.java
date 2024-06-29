@@ -12,6 +12,9 @@ public class ProductTeaser extends BaseProduct {
     private String displayName;
     private String displayPrice;
     private List<ProductDetail> details;
+    private String languageModel;
+
+    private float price;
     public ProductTeaser(int id, String teaserImage, int categoryId) {
         super(id, teaserImage, categoryId);
         displayName = "";
@@ -28,6 +31,20 @@ public class ProductTeaser extends BaseProduct {
 
     public void setDisplayPrice(String displayPrice) {
         this.displayPrice = displayPrice;
+    }
+
+    public void setLanguageModel(String languageModel) {
+        this.languageModel = languageModel;
+    }
+    public String getLanguageModel() {
+        return languageModel;
+    }
+
+    public float getPrice() {
+        return price;
+    }
+    public void setPrice(float price) {
+        this.price = price;
     }
 
     public void setDetails(List<ProductDetail> details) {

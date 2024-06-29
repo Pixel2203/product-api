@@ -5,6 +5,7 @@ import com.example.firstrestapi.Records.ProductDetail;
 import com.example.firstrestapi.service.ProductService;
 import com.example.firstrestapi.util.PriceHelper;
 import com.example.firstrestapi.util.Utils;
+import com.mysql.cj.util.StringUtils;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
@@ -25,7 +26,10 @@ public class LanguageDAO {
      * @param productTeasers ProductDTOs which will be modified
      * @param languageId the language in which it will be translated
      */
-    public void injectDisplayNameAndPrice(List<ProductTeaser> productTeasers, String languageId) throws Exception{
+    public void injectPriceAndName(List<ProductTeaser> productTeasers, String languageId) throws Exception{
+        if(productTeasers.isEmpty() || StringUtils.isNullOrEmpty(languageId)){
+            return;
+        }
         PriceHelper priceHelper = getPriceInformationForLanguage(languageId);
         if(Objects.isNull(priceHelper)){
             priceHelper = new PriceHelper("", "€", false);
@@ -43,10 +47,11 @@ public class LanguageDAO {
             String displayName = resultSet.getString("displayName");
             float price = resultSet.getFloat("displayPrice");
             String displayPrice = priceHelper.buildPrice(price);
-
             productTeasers.stream().filter(productDTO -> productDTO.getId() == productId).forEach(productDTO -> {
                 productDTO.setDisplayName(displayName);
                 productDTO.setDisplayPrice(displayPrice);
+                productDTO.setPrice(price);
+                productDTO.setLanguageModel(languageId);
             });
         }
 

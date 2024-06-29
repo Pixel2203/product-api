@@ -22,7 +22,7 @@ public class FallbackService {
         LanguageDAO languageDAO = new LanguageDAO();
 
         try {
-            languageDAO.injectDisplayNameAndPrice(List.of(fallbackProduct), fallbackLanguage);
+            languageDAO.injectPriceAndName(List.of(fallbackProduct), fallbackLanguage);
 
         } catch (Exception e) {
             log.error("Unable to inject fallback product name and price", e);
@@ -32,6 +32,10 @@ public class FallbackService {
         }
         if(StringUtils.isNullOrEmpty(productTeaser.getDisplayPrice())){
             productTeaser.setDisplayPrice(fallbackProduct.getDisplayPrice());
+        }
+        if(productTeaser.getPrice() == 0){
+            productTeaser.setPrice(fallbackProduct.getPrice());
+            productTeaser.setLanguageModel(fallbackLanguage);
         }
     }
 }

@@ -1,14 +1,16 @@
 package com.example.firstrestapi.service;
 
+import com.example.firstrestapi.DAOs.LanguageDAO;
 import com.example.firstrestapi.DAOs.ProductDAO;
 import com.example.firstrestapi.DAOs.ProductMongoDAO;
 import com.example.firstrestapi.DTOs.BaseProduct;
-import com.example.firstrestapi.DTOs.CartProductDTO;
+import com.example.firstrestapi.DTOs.CartProduct;
 import com.example.firstrestapi.DTOs.Product;
 import com.example.firstrestapi.DTOs.ProductTeaser;
 import com.example.firstrestapi.Database.DBManager;
 import com.example.firstrestapi.Records.RegisterProductRequest;
 import com.example.firstrestapi.responses.EventResponse;
+import com.example.firstrestapi.util.PriceHelper;
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
@@ -86,7 +87,14 @@ public class ProductService {
             return EventResponse.failed("Unable to find product translations");
         }
 
-        List<CartProductDTO> cartProductsWithoutTotalPrice = combineAmountWithProducts(productIds , translatedProducts.get());
+        List<CartProduct> cartProductsWithoutTotalPrice = combineAmountWithProducts(productIds , translatedProducts.get());
+
+        // Format DisplayPrice Total
+        cartProductsWithoutTotalPrice.forEach(cartProduct -> {
+            String languageModel = cartProduct.getProduct().getLanguageModel();
+            PriceHelper helper = languageService.getPriceHelperByLanguage(languageModel);
+            cartProduct.formatTotalDisplayPrice(helper);
+        });
         return new EventResponse<>(true, "Found them!" , cartProductsWithoutTotalPrice);
     }
 
@@ -123,12 +131,14 @@ public class ProductService {
      * @return List of CartProductDTO containing amount and productInfo
      */
     @Nonnull
-    private List<CartProductDTO> combineAmountWithProducts(Map<Integer,Integer> productIdAmountMap, List<ProductTeaser> products) {
+    private List<CartProduct> combineAmountWithProducts(Map<Integer,Integer> productIdAmountMap, List<ProductTeaser> products) {
         return products.stream()
                 .filter(productDTO -> productIdAmountMap.containsKey(productDTO.getId()))
-                .map(productDTO -> new CartProductDTO(productDTO, productIdAmountMap.get(productDTO.getId())))
+                .map(productDTO -> new CartProduct(productDTO, productIdAmountMap.get(productDTO.getId())))
                 .toList();
     }
+
+
 
 
 }
