@@ -1,13 +1,11 @@
-package com.example.firstrestapi.service;
+package com.example.firstrestapi.handler;
 
 import com.example.firstrestapi.DAOs.LanguageDAO;
 import com.example.firstrestapi.DTOs.ProductTeaser;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
 
-import static com.example.firstrestapi.service.LanguageHandler.fallbackLanguage;
 public class DetailHandler {
     private static DetailHandler instance;
     private DetailHandler(){}

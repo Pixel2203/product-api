@@ -2,6 +2,7 @@ package com.example.firstrestapi.DAOs;
 
 
 import com.example.firstrestapi.DTOs.Product;
+import com.example.firstrestapi.DTOs.Rating;
 import com.example.firstrestapi.Database.ExtendedProductInfo;
 import com.example.firstrestapi.Database.ProductRepository;
 import org.slf4j.Logger;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
+import java.util.Optional;
 
 @Component
 public class ProductMongoDAO {
@@ -29,5 +31,16 @@ public class ProductMongoDAO {
         }
         product.setImages(info.getImages());
         product.setRatings(info.getRatings());
+    }
+
+    public Optional<Rating[]> getRatingsByProductId(int productId) {
+        ExtendedProductInfo info = this.productRepository.findExtendedProductInfoByProductId(productId);
+        if(Objects.isNull(info)) {
+            log.warn("Extended product info with id {} not found  in MongoDB", productId);
+            return Optional.empty();
+        }
+        Rating[] ratings = info.getRatings();
+        return Optional.of(ratings);
+
     }
 }

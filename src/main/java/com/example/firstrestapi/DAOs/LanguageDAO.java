@@ -1,7 +1,7 @@
 package com.example.firstrestapi.DAOs;
 
 import com.example.firstrestapi.DTOs.ProductTeaser;
-import com.example.firstrestapi.Records.ProductDetail;
+import com.example.firstrestapi.DTOs.ProductDetail;
 import com.example.firstrestapi.service.ProductService;
 import com.example.firstrestapi.util.PriceHelper;
 import com.example.firstrestapi.util.Utils;

@@ -1,10 +1,9 @@
 package com.example.firstrestapi.DAOs;
 
 import com.example.firstrestapi.DTOs.BaseProduct;
-import com.example.firstrestapi.DTOs.ProductTeaser;
-import com.example.firstrestapi.Records.ProductLanguageTranslation;
-import com.example.firstrestapi.Records.ProductDetail;
-import com.example.firstrestapi.Records.RegisterProductRequest;
+import com.example.firstrestapi.DTOs.ProductLanguageTranslation;
+import com.example.firstrestapi.DTOs.ProductDetail;
+import com.example.firstrestapi.DTOs.RegisterProductRequest;
 import com.example.firstrestapi.service.ProductService;
 import com.example.firstrestapi.util.Utils;
 import org.slf4j.Logger;

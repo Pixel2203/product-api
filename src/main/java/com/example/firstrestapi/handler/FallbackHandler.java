@@ -1,16 +1,15 @@
-package com.example.firstrestapi.service;
+package com.example.firstrestapi.handler;
 
 import com.example.firstrestapi.DAOs.LanguageDAO;
 import com.example.firstrestapi.DTOs.ProductTeaser;
 import com.mysql.cj.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
 
-import static com.example.firstrestapi.service.LanguageHandler.fallbackLanguage;
+import static com.example.firstrestapi.handler.LanguageHandler.fallbackLanguage;
 
 public class FallbackHandler {
     private static final Logger log = LoggerFactory.getLogger(FallbackHandler.class);

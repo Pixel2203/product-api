@@ -6,7 +6,6 @@ import java.util.Arrays;
 public class Product extends ProductTeaser {
     private String[] images;
     private Rating[] ratings;
-    private float ratingAverage;
     public Product(int id, String teaserImage, int categoryId) {
         super(id, teaserImage, categoryId);
     }
@@ -19,9 +18,7 @@ public class Product extends ProductTeaser {
         return product;
     }
 
-    public float getRatingAverage() {
-        return ratingAverage;
-    }
+
 
     public String[] getImages() {
         return images;
@@ -38,7 +35,6 @@ public class Product extends ProductTeaser {
         this.ratings = ratings;
         setRatingAverage();
     }
-
     private void setRatingAverage() {
        if(ratings == null) { return; }
        float average = Arrays.stream(ratings)

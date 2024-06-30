@@ -1,8 +1,7 @@
 package com.example.firstrestapi.DTOs;
 
-import com.example.firstrestapi.Records.ProductDetail;
-
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ProductTeaser extends BaseProduct {
@@ -13,7 +12,7 @@ public class ProductTeaser extends BaseProduct {
     private String displayPrice;
     private List<ProductDetail> details;
     private String languageModel;
-
+    protected float ratingAverage;
     private float price;
     public ProductTeaser(int id, String teaserImage, int categoryId) {
         super(id, teaserImage, categoryId);
@@ -65,7 +64,16 @@ public class ProductTeaser extends BaseProduct {
         return displayName;
     }
 
-
+    public float getRatingAverage() {
+        return ratingAverage;
+    }
+    public void setRatingAverage(Rating[] ratings) {
+        if(ratings == null) { return; }
+        float average = Arrays.stream(ratings)
+                .map(Rating::rating)
+                .reduce(0f, Float::sum);
+        this.ratingAverage = average / ratings.length;
+    }
 
     public static ProductTeaser copyFrom(ProductTeaser productTeaser){
         ProductTeaser dto = new ProductTeaser(productTeaser.getId(), productTeaser.getTeaserImage(), productTeaser.getCategoryId());

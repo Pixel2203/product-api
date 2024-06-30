@@ -1,4 +1,4 @@
-package com.example.firstrestapi.service;
+package com.example.firstrestapi.handler;
 import com.example.firstrestapi.DAOs.LanguageDAO;
 import com.example.firstrestapi.DTOs.BaseProduct;
 import com.example.firstrestapi.DTOs.ProductTeaser;
@@ -29,16 +29,9 @@ public class LanguageHandler {
     public Optional<List<ProductTeaser>> getProductsWithFullTranslation(List<BaseProduct> baseProducts, String languageId){
         List<ProductTeaser> productTeasers = baseProducts.stream().map(ProductTeaser::new).toList();
 
-        // Adds displayName and displayPrice without fallback
+
         fallbackHandler.injectDisplayPriceAndDisplayNameIntoProductsWithFallback(productTeasers, languageId);
-
-        // fallback for displayName and displayPrice
-
-
-        // Add details to product without fallback
         fallbackHandler.injectTranslatedDetailsIntoProductsWithFallback(productTeasers, languageId);
-
-        // Adds fallback details if needed
 
 
         List<ProductTeaser> productTeaserList = productTeasers

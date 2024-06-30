@@ -7,7 +7,8 @@ import com.example.firstrestapi.DTOs.CartProduct;
 import com.example.firstrestapi.DTOs.Product;
 import com.example.firstrestapi.DTOs.ProductTeaser;
 import com.example.firstrestapi.Database.DBManager;
-import com.example.firstrestapi.Records.RegisterProductRequest;
+import com.example.firstrestapi.DTOs.RegisterProductRequest;
+import com.example.firstrestapi.handler.LanguageHandler;
 import com.example.firstrestapi.responses.EventResponse;
 import com.example.firstrestapi.util.PriceHelper;
 import jakarta.annotation.Nonnull;
@@ -46,10 +47,24 @@ public class ProductService {
             return EventResponse.failed("Unable to get products by category and language!");
         }
         Optional<List<ProductTeaser>> optionalProductsWithLanguage = languageHandler.getProductsWithFullTranslation(optionalProducts.get(), languageId);
+
+        if(optionalProductsWithLanguage.isEmpty()){
+            return EventResponse.failed("Failed to add language details to products!");
+        }
+        var teasers = optionalProductsWithLanguage.get();
+        for(ProductTeaser productTeaser : teasers){
+            var ratings = productMongoDAO.getRatingsByProductId(productTeaser.getId());
+            if(ratings.isEmpty()){
+             productTeaser.setRatingAverage();
+            }
+        }
+
+
         if(optionalProductsWithLanguage.isPresent()){
             return new EventResponse<>(true, "Successfully collected products!", optionalProductsWithLanguage.get());
         }
-        return EventResponse.failed("Failed to add language details to products!");
+
+
     }
 
     /**

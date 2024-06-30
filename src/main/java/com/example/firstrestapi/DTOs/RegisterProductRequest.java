@@ -1,4 +1,4 @@
-package com.example.firstrestapi.Records;
+package com.example.firstrestapi.DTOs;
 
 import java.util.List;
 
