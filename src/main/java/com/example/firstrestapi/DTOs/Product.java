@@ -1,11 +1,10 @@
 package com.example.firstrestapi.DTOs;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
 
 public class Product extends ProductTeaser {
-    private String[] images;
-    private Rating[] ratings;
+    private List<String> images;
+    private List<Rating> ratings;
     public Product(int id, String teaserImage, int categoryId) {
         super(id, teaserImage, categoryId);
     }
@@ -20,26 +19,26 @@ public class Product extends ProductTeaser {
 
 
 
-    public String[] getImages() {
+    public List<String> getImages() {
         return images;
     }
 
-    public Rating[] getRatings() {
+    public List<Rating> getRatings() {
         return ratings;
     }
 
-    public void setImages(String[] images) {
+    public void setImages(List<String> images) {
         this.images = images;
     }
-    public void setRatings(Rating[] ratings) {
+    public void setRatings(List<Rating> ratings) {
         this.ratings = ratings;
         setRatingAverage();
     }
     private void setRatingAverage() {
        if(ratings == null) { return; }
-       float average = Arrays.stream(ratings)
+       float average = ratings.stream()
                .map(Rating::rating)
                .reduce(0f, Float::sum);
-       this.ratingAverage = average / ratings.length;
+       this.ratingAverage = average / ratings.size();
     }
 }

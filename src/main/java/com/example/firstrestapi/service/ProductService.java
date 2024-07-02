@@ -2,14 +2,11 @@ package com.example.firstrestapi.service;
 
 import com.example.firstrestapi.DAOs.ProductDAO;
 import com.example.firstrestapi.DAOs.ProductMongoDAO;
-import com.example.firstrestapi.DTOs.BaseProduct;
-import com.example.firstrestapi.DTOs.CartProduct;
-import com.example.firstrestapi.DTOs.Product;
-import com.example.firstrestapi.DTOs.ProductTeaser;
+import com.example.firstrestapi.DTOs.*;
 import com.example.firstrestapi.Database.DBManager;
-import com.example.firstrestapi.DTOs.RegisterProductRequest;
 import com.example.firstrestapi.handler.LanguageHandler;
 import com.example.firstrestapi.responses.EventResponse;
+import com.example.firstrestapi.util.CHeaders;
 import com.example.firstrestapi.util.PriceHelper;
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
@@ -150,6 +147,9 @@ public class ProductService {
     }
 
 
-
-
+    public EventResponse<?> addRatingToProduct(RatingContext context, Map<String, String> headers) {
+        productMongoDAO.injectRatingIntoExtendedProductInfo(context);
+        log.info("Added Rating to product={}" , context.getProductId());
+        return EventResponse.withoutResult(true, "Successfully added rating!");
+    }
 }

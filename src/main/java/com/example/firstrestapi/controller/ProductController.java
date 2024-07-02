@@ -1,5 +1,7 @@
 package com.example.firstrestapi.controller;
 
+import com.example.firstrestapi.DTOs.Rating;
+import com.example.firstrestapi.DTOs.RatingContext;
 import com.example.firstrestapi.responses.EventResponse;
 import com.example.firstrestapi.service.ProductService;
 import org.slf4j.Logger;
@@ -52,5 +54,7 @@ public class ProductController {
     }
 
     @PostMapping("/rate")
-    public EventResponse<?> rateProduct()
+    public EventResponse<?> rateProduct(@RequestBody RatingContext context, @RequestHeader Map<String, String> headers){
+        return productService.addRatingToProduct(context, headers);
+    }
 }
