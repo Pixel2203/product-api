@@ -50,4 +50,7 @@ public class ProductController {
     public EventResponse<?> getProductById(@PathVariable int productId, @RequestParam String language){
         return productService.getProductById(productId,language);
     }
+
+    @PostMapping("/rate")
+    public EventResponse<?> rateProduct()
 }

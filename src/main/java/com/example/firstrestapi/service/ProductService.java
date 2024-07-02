@@ -55,14 +55,12 @@ public class ProductService {
         for(ProductTeaser productTeaser : teasers){
             var ratings = productMongoDAO.getRatingsByProductId(productTeaser.getId());
             if(ratings.isEmpty()){
-             productTeaser.setRatingAverage();
+             productTeaser.setRatingAverage(null);
             }
         }
 
 
-        if(optionalProductsWithLanguage.isPresent()){
-            return new EventResponse<>(true, "Successfully collected products!", optionalProductsWithLanguage.get());
-        }
+        return new EventResponse<>(true, "Successfully collected products!", teasers);
 
 
     }
