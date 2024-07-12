@@ -1,5 +1,6 @@
 package com.example.firstrestapi.controller;
 
+import com.example.firstrestapi.CHeaders;
 import com.example.firstrestapi.DTOs.Rating;
 import com.example.firstrestapi.DTOs.RatingContext;
 import com.example.firstrestapi.responses.EventResponse;
@@ -54,7 +55,11 @@ public class ProductController {
     }
 
     @PostMapping("/rate")
-    public EventResponse<?> rateProduct(@RequestBody RatingContext context, @RequestHeader Map<String, String> headers){
-        return productService.addRatingToProduct(context, headers);
+    public EventResponse<?> rateProduct(@RequestBody RatingContext context, @RequestHeader(CHeaders.USERID) int uId){
+        return productService.addRatingToProduct(context, uId);
+    }
+    @DeleteMapping("/rate/{productId}")
+    public EventResponse<?> deleteRating(@RequestHeader(CHeaders.USERID) int uId, @RequestBody String ratingId, @PathVariable int productId){
+       return productService.removeRatingFromProduct(ratingId, uId, productId);
     }
 }

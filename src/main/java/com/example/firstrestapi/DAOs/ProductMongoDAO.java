@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 public class ProductMongoDAO {
@@ -42,17 +43,33 @@ public class ProductMongoDAO {
     }
 
     public void injectRatingIntoExtendedProductInfo(RatingContext context){
-        var info = getExtendedProductInfoByProductId(context.getProductId());
+        var info = getExtendedProductInfoByProductId(context.productId());
         ExtendedProductInfo eInfo;
         if(info.isEmpty()) {
-            eInfo = new ExtendedProductInfo("", context.getProductId(), null, null);
-            eInfo.addRating(context.getRating());
+            eInfo = new ExtendedProductInfo("", context.productId(), null, null);
+            eInfo.addRating(context.rating());
             productRepository.save(eInfo);
             return;
         }
         eInfo = info.get();
-        eInfo.addRating(context.getRating());
+        eInfo.addRating(context.rating());
         productRepository.save(eInfo);
+    }
+
+    public boolean removeRatingFromExtendedProductInfo(int productId, int uId, String ratingId){
+        var info = getExtendedProductInfoByProductId(productId);
+        if(info.isEmpty()){
+            log.warn("Could not remove rating because it does not exist - ratingId={}", ratingId);
+            return false;
+        }
+
+        log.info("Removed rating for productId={}, ratingId={}", productId, ratingId);
+        if(!info.get().removeRating(ratingId, uId)){
+            log.warn("Could not remove rating for productId={}, ratingId={}", productId, ratingId);
+            return false;
+        }
+        productRepository.save(info.get());
+        return true;
     }
 
     private Optional<ExtendedProductInfo> getExtendedProductInfoByProductId(int productId) {

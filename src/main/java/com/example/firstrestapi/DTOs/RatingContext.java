@@ -1,17 +1,13 @@
 package com.example.firstrestapi.DTOs;
 
-public class RatingContext {
-  private final Rating rating;
-  private final int productId;
+public record RatingContext(Rating rating, int productId) {
 
+  public void insertUserId(int userId) {
+    this.rating.setUserId(userId);
+  }
   public RatingContext(Rating rating, int productId) {
-    this.rating = rating;
-    this.productId = productId;
-  }
-  public Rating getRating() {
-    return rating;
-  }
-  public int getProductId() {
-    return productId;
+   this.rating = rating;
+   this.productId = productId;
+   this.rating.generateRatingId();
   }
 }

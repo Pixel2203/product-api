@@ -67,12 +67,12 @@ public class ProductTeaser extends BaseProduct {
     public float getRatingAverage() {
         return ratingAverage;
     }
-    public void setRatingAverage(Rating[] ratings) {
+    public void setRatingAverage(List<Rating> ratings) {
         if(ratings == null) { return; }
-        float average = Arrays.stream(ratings)
-                .map(Rating::rating)
+        float average = ratings.stream()
+                .map(Rating::getRating)
                 .reduce(0f, Float::sum);
-        this.ratingAverage = average / ratings.length;
+        this.ratingAverage = average / ratings.size();
     }
 
     public static ProductTeaser copyFrom(ProductTeaser productTeaser){

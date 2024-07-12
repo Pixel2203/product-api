@@ -1,5 +1,6 @@
 package com.example.firstrestapi.DTOs;
 
+import com.mysql.cj.util.StringUtils;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
@@ -20,7 +21,7 @@ public class ExtendedProductInfo {
     @Nullable
     private final List<String> images;
     @Nullable
-    private final List<Rating> ratings;
+    private List<Rating> ratings;
 
     public String getId() {
         return id;
@@ -70,6 +71,32 @@ public class ExtendedProductInfo {
         }
         this.ratings.add(rating);
         return true;
+    }
+    public boolean removeRating(String ratingId, int uId) {
+        if(StringUtils.isNullOrEmpty(ratingId)){
+            log.warn("Cannot remove null rating - productId={}", productId);
+            return false;
+        }
+        if(Objects.isNull(ratings)){
+            log.warn("Cannot remove rating from list of null - productId={}", productId);
+            return false;
+        }
+        var toRemoveRating = ratings.stream().filter(rating -> Objects.nonNull(rating.getRatingId())).filter(rating -> rating.getRatingId().equalsIgnoreCase(ratingId)).findFirst();
+        if(toRemoveRating.isEmpty()){
+            log.warn("Cannot find rating with id {} - productId={}", ratingId, productId);
+            return false;
+        }
+        boolean isSameUser = toRemoveRating.get().getUserId() == uId;
+        if(!isSameUser){
+            log.warn("User {} is not permitted to remove this rating={}", uId, ratingId);
+            return false;
+        }
+
+        return ratings.remove(toRemoveRating.get());
+
+    }
+    private void setRatings(@Nullable List<Rating> ratings){
+        this.ratings = ratings;
     }
 
 }

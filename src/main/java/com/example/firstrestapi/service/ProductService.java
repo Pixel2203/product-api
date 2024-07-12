@@ -6,7 +6,6 @@ import com.example.firstrestapi.DTOs.*;
 import com.example.firstrestapi.Database.DBManager;
 import com.example.firstrestapi.handler.LanguageHandler;
 import com.example.firstrestapi.responses.EventResponse;
-import com.example.firstrestapi.util.CHeaders;
 import com.example.firstrestapi.util.PriceHelper;
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
@@ -53,7 +52,9 @@ public class ProductService {
             var ratings = productMongoDAO.getRatingsByProductId(productTeaser.getId());
             if(ratings.isEmpty()){
              productTeaser.setRatingAverage(null);
+             continue;
             }
+            productTeaser.setRatingAverage(ratings);
         }
 
 
@@ -146,10 +147,24 @@ public class ProductService {
                 .toList();
     }
 
+    /**
+     * Adds a Rating to a products
+     * @param context Context to create the rating from
+     * @param uId User that wrote the Rating and sended it to Gateway API
+     * @return Returns a Response if it succeeded or not
+     */
 
-    public EventResponse<?> addRatingToProduct(RatingContext context, Map<String, String> headers) {
+    public EventResponse<?> addRatingToProduct(RatingContext context, int uId) {
+        context.insertUserId(uId);
         productMongoDAO.injectRatingIntoExtendedProductInfo(context);
-        log.info("Added Rating to product={}" , context.getProductId());
+        log.info("Added Rating to product={}" , context.productId());
         return EventResponse.withoutResult(true, "Successfully added rating!");
+    }
+
+    public EventResponse<?> removeRatingFromProduct(String ratingId, int uId, int productId) {
+        boolean worked = productMongoDAO.removeRatingFromExtendedProductInfo(productId, uId, ratingId);
+        if(worked)
+            return EventResponse.withoutResult(true, "Successfully removed rating!");
+        return EventResponse.failed("Unable to remove rating!");
     }
 }

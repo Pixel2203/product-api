@@ -37,7 +37,7 @@ public class Product extends ProductTeaser {
     private void setRatingAverage() {
        if(ratings == null) { return; }
        float average = ratings.stream()
-               .map(Rating::rating)
+               .map(Rating::getRating)
                .reduce(0f, Float::sum);
        this.ratingAverage = average / ratings.size();
     }
