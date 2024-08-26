@@ -1,10 +1,10 @@
 package com.example.firstrestapi.controller;
 
 import com.example.firstrestapi.CHeaders;
-import com.example.firstrestapi.DTOs.Rating;
 import com.example.firstrestapi.DTOs.RatingContext;
 import com.example.firstrestapi.responses.EventResponse;
 import com.example.firstrestapi.service.ProductService;
+import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +38,7 @@ public class ProductController {
 
     @PostMapping("/cart")
     public EventResponse<?> getProductsInCart(
-            @RequestHeader(HttpHeaders.ACCEPT_LANGUAGE) String lang,
+            @RequestHeader(CHeaders.LOCALE) String lang,
             @RequestBody Map<Integer, Integer> productIds){
         return productService.getProductsByIdsWithFallback(productIds, lang);
     }
@@ -46,18 +46,25 @@ public class ProductController {
     /**
      * Returns a Product Object for the given productId
      * @param productId ProductId of the wanted product from the database
-     * @param language Desired Language of the product
+     * @param locale Desired Language of the product
      * @return
      */
-    @GetMapping("/products/product/{productId}")
-    public EventResponse<?> getProductById(@PathVariable int productId, @RequestParam String language){
-        return productService.getProductById(productId,language);
+    @GetMapping("/product/{productId}")
+    public EventResponse<?> getProductById(
+            @PathVariable int productId,
+            @RequestHeader(value = CHeaders.LOCALE,required = false, defaultValue = "de") String locale,
+            @RequestHeader(value = CHeaders.USERID, required = false) @Nullable Integer userId){
+        return productService.getProductById(productId, locale, userId);
     }
 
     @PostMapping("/rate")
-    public EventResponse<?> rateProduct(@RequestBody RatingContext context, @RequestHeader(CHeaders.USERID) int uId){
-        return productService.addRatingToProduct(context, uId);
+    public EventResponse<?> rateProduct(
+            @RequestBody RatingContext context,
+            @RequestHeader(CHeaders.USERID) int uId,
+            @RequestHeader(CHeaders.LOCALE) String language){
+        return productService.addRatingToProduct(context, uId, language);
     }
+
     @DeleteMapping("/rate/{productId}")
     public EventResponse<?> deleteRating(@RequestHeader(CHeaders.USERID) int uId, @RequestBody String ratingId, @PathVariable int productId){
        return productService.removeRatingFromProduct(ratingId, uId, productId);

@@ -7,6 +7,9 @@ import com.example.firstrestapi.DTOs.ExtendedProductInfo;
 import com.example.firstrestapi.DTOs.Rating;
 import com.example.firstrestapi.DTOs.RatingContext;
 import com.example.firstrestapi.Database.ProductRepository;
+import com.example.firstrestapi.util.ErrorCode;
+import com.mysql.cj.util.StringUtils;
+import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,14 +29,20 @@ public class ProductMongoDAO {
         this.productRepository = productRepository;
     }
 
-    public void injectExtendedProductInfoIntoProduct(Product product) {
+    public void injectExtendedProductInfoIntoProduct(Product product, @Nullable Integer userId) {
         var info = getExtendedProductInfoByProductId(product.getId());
 
         if(info.isEmpty()){
             return;
         }
         product.setImages(info.get().getImages());
-        product.setRatings(info.get().getRatings());
+        var ratings = info.get().getRatings();
+        if(Objects.nonNull(userId)){
+            var userRating = ratings.stream().filter(rating -> rating.getUserId().equals(userId)).findFirst();
+            userRating.ifPresent(ratings::remove);
+            userRating.ifPresent(rating -> ratings.add(0,rating));
+        }
+        product.setRatings(ratings);
     }
 
     public List<Rating> getRatingsByProductId(int productId) {
@@ -42,18 +51,35 @@ public class ProductMongoDAO {
 
     }
 
-    public void injectRatingIntoExtendedProductInfo(RatingContext context){
+    public ErrorCode injectRatingIntoExtendedProductInfo(RatingContext context){
         var info = getExtendedProductInfoByProductId(context.productId());
         ExtendedProductInfo eInfo;
         if(info.isEmpty()) {
             eInfo = new ExtendedProductInfo("", context.productId(), null, null);
             eInfo.addRating(context.rating());
             productRepository.save(eInfo);
-            return;
+            return ErrorCode.NONE;
         }
         eInfo = info.get();
-        eInfo.addRating(context.rating());
-        productRepository.save(eInfo);
+        boolean hasUserAlreadyRated = eInfo.getRatings().stream().map(Rating::getUserId).anyMatch(id -> Objects.equals(id, context.rating().getUserId()));
+        if(!hasUserAlreadyRated){
+            eInfo.addRating(context.rating());
+            productRepository.save(eInfo);
+            return ErrorCode.NONE;
+        }
+
+        // Update Rating
+        if(!StringUtils.isNullOrEmpty(context.rating().getRatingId())){
+            log.info("User {} is updating his rating for product={}", context.rating().getUserId(), context.productId());
+            eInfo.removeRating(context.rating().getRatingId(), context.rating().getUserId());
+            eInfo.addRating(context.rating());
+            productRepository.save(eInfo);
+            return ErrorCode.NONE;
+        }
+        // Already Rated
+        log.warn("User {} has already rated this product={}, unable to add rating.", context.rating().getUserId(), context.productId());
+        return ErrorCode.PRODUCT_ALREADY_RATED;
+
     }
 
     public boolean removeRatingFromExtendedProductInfo(int productId, int uId, String ratingId){

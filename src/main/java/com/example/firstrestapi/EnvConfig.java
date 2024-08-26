@@ -17,6 +17,9 @@ public class EnvConfig {
     @Value("${database.string}")
     private String connectionString;
 
+    @Value("${i18n.default.language}")
+    private String defaultLanguage;
+
     public String getConnectionString() {
         return connectionString;
     }
@@ -27,6 +30,10 @@ public class EnvConfig {
 
     public String getUserPassword() {
         return userPassword;
+    }
+
+    public String getDefaultLanguage() {
+        return defaultLanguage;
     }
 
 }

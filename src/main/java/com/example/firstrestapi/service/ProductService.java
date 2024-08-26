@@ -4,13 +4,17 @@ import com.example.firstrestapi.DAOs.ProductDAO;
 import com.example.firstrestapi.DAOs.ProductMongoDAO;
 import com.example.firstrestapi.DTOs.*;
 import com.example.firstrestapi.Database.DBManager;
+import com.example.firstrestapi.EnvConfig;
 import com.example.firstrestapi.handler.LanguageHandler;
 import com.example.firstrestapi.responses.EventResponse;
+import com.example.firstrestapi.util.ErrorCode;
 import com.example.firstrestapi.util.PriceHelper;
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -21,11 +25,19 @@ public class ProductService {
     private final LanguageHandler languageHandler;
     public static DBManager dbManager;
     private final ProductMongoDAO productMongoDAO;
+    private final ResourceBundleMessageSource messageSource;
 
     @Autowired
-    public ProductService(DBManager dbManager, ProductMongoDAO productMongoDAO) {
+    public ProductService(DBManager dbManager, ProductMongoDAO productMongoDAO, EnvConfig envConfig) {
         this.languageHandler = LanguageHandler.getInstance();
         this.productMongoDAO = productMongoDAO;
+
+        ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+        messageSource.setBasename("translation/messages");
+        messageSource.setDefaultEncoding("UTF-8");
+        messageSource.setDefaultLocale(Locale.of(envConfig.getDefaultLanguage()));
+        this.messageSource = messageSource;
+
         ProductService.dbManager = dbManager;
         ProductService.dbManager.connect();
     }
@@ -40,12 +52,12 @@ public class ProductService {
         ProductDAO productDAO = new ProductDAO();
         Optional<List<BaseProduct>> optionalProducts = productDAO.getProductsByCategory(categoryId);
         if(optionalProducts.isEmpty()){
-            return EventResponse.failed("Unable to get products by category and language!");
+            return EventResponse.failed("Unable to get products by category and language!", ErrorCode.NONE);
         }
         Optional<List<ProductTeaser>> optionalProductsWithLanguage = languageHandler.getProductsWithFullTranslation(optionalProducts.get(), languageId);
 
         if(optionalProductsWithLanguage.isEmpty()){
-            return EventResponse.failed("Failed to add language details to products!");
+            return EventResponse.failed("Failed to add language details to products!", ErrorCode.NONE);
         }
         var teasers = optionalProductsWithLanguage.get();
         for(ProductTeaser productTeaser : teasers){
@@ -58,7 +70,7 @@ public class ProductService {
         }
 
 
-        return new EventResponse<>(true, "Successfully collected products!", teasers);
+        return new EventResponse<>(true, "Successfully collected products!", teasers, ErrorCode.NONE.getCode());
 
 
     }
@@ -85,7 +97,7 @@ public class ProductService {
                 .toList());
 
         if(baseProductsInCart.isEmpty()){
-            return EventResponse.failed("Unable to find products!");
+            return EventResponse.failed("Unable to find products!", ErrorCode.NONE);
         }
 
         // Adds Details
@@ -93,7 +105,7 @@ public class ProductService {
 
         if(translatedProducts.isEmpty()){
             log.error("Unable to add product translations for ids {}", productIds.keySet());
-            return EventResponse.failed("Unable to find product translations");
+            return EventResponse.failed("Unable to find product translations", ErrorCode.NONE);
         }
 
         List<CartProduct> cartProductsWithoutTotalPrice = combineAmountWithProducts(productIds , translatedProducts.get());
@@ -104,31 +116,32 @@ public class ProductService {
             PriceHelper helper = languageHandler.getPriceHelperByLanguage(languageModel);
             cartProduct.formatTotalDisplayPrice(helper);
         });
-        return new EventResponse<>(true, "Found them!" , cartProductsWithoutTotalPrice);
+        return new EventResponse<>(true, "Found them!" , cartProductsWithoutTotalPrice, ErrorCode.NONE.getCode());
     }
 
     /**
      *
      * @param productId ProductId of the desired product
      * @param languageId languageId of the language in which the product will be translated to
+     * @param userId Sorts the returned ratings so the rating of this user is the first element in the list
      * @return EventResponse of Product Object
      */
-    public EventResponse<?> getProductById(int productId, String languageId) {
+    public EventResponse<?> getProductById(int productId, String languageId, @Nullable Integer userId) {
         ProductDAO productDAO = new ProductDAO();
         var baseProduct = productDAO.getBaseProducts(List.of(productId));
         if(baseProduct.isEmpty()){
             log.warn("Unable to find product with id {}", productId);
-            return EventResponse.failed("Unable to find product!");
+            return EventResponse.failed("Unable to find product!", ErrorCode.NONE);
         }
 
         Optional<List<ProductTeaser>> translatedProduct = languageHandler.getProductsWithFullTranslation(baseProduct.get(), languageId);
         if(translatedProduct.isEmpty() || translatedProduct.get().isEmpty()){
             log.error("Unable to translate product with id {}", productId);
-            return EventResponse.failed("Unable to translate product!");
+            return EventResponse.failed("Unable to translate product!", ErrorCode.NONE);
         }
         Product translatedProductWithoutRatingsAndImages = Product.of(translatedProduct.get().get(0));
-        this.productMongoDAO.injectExtendedProductInfoIntoProduct(translatedProductWithoutRatingsAndImages);
-        return new EventResponse<>(true, "Successfully got product", translatedProductWithoutRatingsAndImages);
+        this.productMongoDAO.injectExtendedProductInfoIntoProduct(translatedProductWithoutRatingsAndImages, userId);
+        return new EventResponse<>(true, "Successfully got product", translatedProductWithoutRatingsAndImages, ErrorCode.NONE.getCode());
 
     }
 
@@ -154,17 +167,21 @@ public class ProductService {
      * @return Returns a Response if it succeeded or not
      */
 
-    public EventResponse<?> addRatingToProduct(RatingContext context, int uId) {
+    public EventResponse<?> addRatingToProduct(RatingContext context, int uId, String language) {
         context.insertUserId(uId);
-        productMongoDAO.injectRatingIntoExtendedProductInfo(context);
-        log.info("Added Rating to product={}" , context.productId());
-        return EventResponse.withoutResult(true, "Successfully added rating!");
+        ErrorCode errorCode = productMongoDAO.injectRatingIntoExtendedProductInfo(context);
+        if(errorCode == ErrorCode.NONE){
+            log.info("Added Rating to product={}" , context.productId());
+            return EventResponse.withoutResult(true, messageSource.getMessage("rating.add.success",null,Locale.of(language)), errorCode);
+        }
+        log.warn("Unable to add Rating to product={}" , context.productId());
+        return EventResponse.failed(messageSource.getMessage("rating.add.failed.duplicate",null, Locale.of(language)), errorCode);
     }
 
     public EventResponse<?> removeRatingFromProduct(String ratingId, int uId, int productId) {
         boolean worked = productMongoDAO.removeRatingFromExtendedProductInfo(productId, uId, ratingId);
         if(worked)
-            return EventResponse.withoutResult(true, "Successfully removed rating!");
-        return EventResponse.failed("Unable to remove rating!");
+            return EventResponse.withoutResult(true, "Successfully removed rating!", ErrorCode.NONE);
+        return EventResponse.failed("Unable to remove rating!", ErrorCode.NONE);
     }
 }
