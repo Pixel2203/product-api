@@ -11,19 +11,13 @@ import java.util.*;
 public class LanguageHandler {
 
     public static final String fallbackLanguage = "EN";
-    private static final Logger log = LoggerFactory.getLogger(LanguageHandler.class);
     private final FallbackHandler fallbackHandler;
-    private static LanguageHandler instance;
-    private LanguageHandler() {
-        this.fallbackHandler = FallbackHandler.getInstance();
+    private final LanguageDAO languageDAO;
+    public LanguageHandler(LanguageDAO languageDAO) {
+        this.fallbackHandler = new FallbackHandler(languageDAO);
+        this.languageDAO = languageDAO;
     }
 
-    public static LanguageHandler getInstance() {
-        if(Objects.isNull(instance)) {
-            instance = new LanguageHandler();
-        }
-        return instance;
-    }
 
 
     public Optional<List<ProductTeaser>> getProductsWithFullTranslation(List<BaseProduct> baseProducts, String languageId){
@@ -44,7 +38,6 @@ public class LanguageHandler {
 
 
     public PriceHelper getPriceHelperByLanguage(String language){
-        LanguageDAO languageDAO = new LanguageDAO();
         return languageDAO.getPriceInformationForLanguage(language);
     }
 

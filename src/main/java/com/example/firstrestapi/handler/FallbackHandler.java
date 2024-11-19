@@ -13,17 +13,11 @@ import static com.example.firstrestapi.handler.LanguageHandler.fallbackLanguage;
 
 public class FallbackHandler {
     private static final Logger log = LoggerFactory.getLogger(FallbackHandler.class);
-
+    private final LanguageDAO languageDAO;
     private final DetailHandler detailHandler;
-    private FallbackHandler(){
-        this.detailHandler = DetailHandler.getInstance();
-    }
-    private static FallbackHandler instance;
-    public static FallbackHandler getInstance() {
-        if(Objects.isNull(instance)) {
-            instance = new FallbackHandler();
-        }
-        return instance;
+    public FallbackHandler(LanguageDAO languageDAO) {
+        this.detailHandler = new DetailHandler(languageDAO);
+        this.languageDAO = languageDAO;
     }
 
     public void injectDisplayPriceAndDisplayNameIntoProductsWithFallback(List<ProductTeaser> productTeasers, String languageId) {
@@ -31,7 +25,6 @@ public class FallbackHandler {
         productTeasers.forEach(this::checkAndFallbackProductNameAndPrice);
     }
     private void injectDisplayPriceAndDisplayNameIntoProducts(List<ProductTeaser> productTeasers, String languageId) {
-        LanguageDAO languageDAO = new LanguageDAO();
         try {
             languageDAO.injectPriceAndName(productTeasers,languageId);
         } catch (Exception e) {
@@ -42,7 +35,6 @@ public class FallbackHandler {
 
         //detailService.addTranslatedDetailsWithFallback(List.of(productDTO),fallbackLanguage, false);
         ProductTeaser fallbackProduct = ProductTeaser.copyFrom(productTeaser);
-        LanguageDAO languageDAO = new LanguageDAO();
 
         try {
             languageDAO.injectPriceAndName(List.of(fallbackProduct), fallbackLanguage);
@@ -55,10 +47,6 @@ public class FallbackHandler {
         }
         if(StringUtils.isNullOrEmpty(productTeaser.getDisplayPrice())){
             productTeaser.setDisplayPrice(fallbackProduct.getDisplayPrice());
-        }
-        if(productTeaser.getPrice() == 0){
-            productTeaser.setPrice(fallbackProduct.getPrice());
-            productTeaser.setLanguageModel(fallbackLanguage);
         }
     }
 

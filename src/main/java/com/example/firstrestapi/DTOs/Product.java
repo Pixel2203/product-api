@@ -5,12 +5,12 @@ import java.util.List;
 public class Product extends ProductTeaser {
     private List<String> images;
     private List<Rating> ratings;
-    public Product(int id, String teaserImage, int categoryId) {
-        super(id, teaserImage, categoryId);
+    public Product(int id, String teaserImage, int categoryId, float price) {
+        super(id, teaserImage, categoryId, price);
     }
 
     public static Product of(ProductTeaser productTeaser) {
-        Product product = new Product(productTeaser.getId(), productTeaser.getTeaserImage(), productTeaser.getCategoryId());
+        Product product = new Product(productTeaser.getId(), productTeaser.getTeaserImage(), productTeaser.getCategoryId(), productTeaser.getPrice());
         product.setDetails(productTeaser.getDetails());
         product.setDisplayName(productTeaser.getDisplayName());
         product.setDisplayPrice(productTeaser.getDisplayPrice());

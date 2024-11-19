@@ -2,23 +2,17 @@ package com.example.firstrestapi.handler;
 
 import com.example.firstrestapi.DAOs.LanguageDAO;
 import com.example.firstrestapi.DTOs.ProductTeaser;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.Objects;
-
+@RequiredArgsConstructor
 public class DetailHandler {
     private static DetailHandler instance;
-    private DetailHandler(){}
-    public static DetailHandler getInstance() {
-        if(Objects.isNull(instance)) {
-            instance = new DetailHandler();
-        }
-        return instance;
-    }
+    private final LanguageDAO languageDAO;
 
 
     public void injectTranslatedDetailsIntoProducts(List<ProductTeaser> productTeasers, String languageId) {
-        LanguageDAO languageDAO = new LanguageDAO();
         for (ProductTeaser product : productTeasers) {
             var details = languageDAO.getProductDetailsByProductIdAndLanguageId(product.getId(), languageId);
             if(details.isEmpty()) { continue; }

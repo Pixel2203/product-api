@@ -2,59 +2,62 @@ package com.example.firstrestapi.DAOs;
 
 import com.example.firstrestapi.DTOs.ProductTeaser;
 import com.example.firstrestapi.DTOs.ProductDetail;
+import com.example.firstrestapi.Database.mysql.tables.ProductTranslationModel;
+import com.example.firstrestapi.Database.mysql.tables.ProductTranslationRepository;
 import com.example.firstrestapi.service.ProductService;
 import com.example.firstrestapi.util.PriceHelper;
 import com.example.firstrestapi.util.Utils;
 import com.mysql.cj.util.StringUtils;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
 
-
+@RequiredArgsConstructor
 public class LanguageDAO {
 
     private static final Logger log = LoggerFactory.getLogger(LanguageDAO.class);
+    private final ProductTranslationRepository productTranslationRepository;
 
     /**
      * Injects displayPrice and displayName into the given products
      * @param productTeasers ProductDTOs which will be modified
      * @param languageId the language in which it will be translated
      */
-    public void injectPriceAndName(List<ProductTeaser> productTeasers, String languageId) throws Exception{
+    public void injectPriceAndName(List<ProductTeaser> productTeasers, String languageId) {
         if(productTeasers.isEmpty() || StringUtils.isNullOrEmpty(languageId)){
             return;
         }
+        injectDisplayPrice(productTeasers, languageId);
+        injectDisplayName(productTeasers, languageId);
+
+    }
+
+    private void injectDisplayName(List<ProductTeaser> productTeasers, String languageId){
+        for(ProductTeaser productTeaser : productTeasers) {
+            productTranslationRepository.findProductTranslationModelByProductIdAndLanguageId(productTeaser.getId(), languageId).ifPresent(productTranslationModel -> {
+                productTeaser.setDisplayName(productTranslationModel.getDisplayName());
+                productTeaser.setLanguageModel(languageId);
+            });
+        }
+    }
+
+    private void injectDisplayPrice(List<ProductTeaser> productTeasers, String languageId){
         PriceHelper priceHelper = getPriceInformationForLanguage(languageId);
         if(Objects.isNull(priceHelper)){
             priceHelper = new PriceHelper("", "€", false);
         }
-        List<Integer> productIds = productTeasers.stream().map(ProductTeaser::getId).toList();
 
-        String sql = "SELECT * FROM productTranslation WHERE productTranslation.productId IN %s AND productTranslation.languageId='%s'".formatted(Utils.buildIn(productIds),languageId);
-
-
-        Statement statement = ProductService.dbManager.getConnection().createStatement();
-        ResultSet resultSet = statement.executeQuery(sql);
-
-        while(resultSet.next()){
-            int productId = resultSet.getInt("productId");
-            String displayName = resultSet.getString("displayName");
-            float price = resultSet.getFloat("displayPrice");
-            String displayPrice = priceHelper.buildPrice(price);
-            productTeasers.stream().filter(productDTO -> productDTO.getId() == productId).forEach(productDTO -> {
-                productDTO.setDisplayName(displayName);
-                productDTO.setDisplayPrice(displayPrice);
-                productDTO.setPrice(price);
-                productDTO.setLanguageModel(languageId);
-            });
+        for(ProductTeaser productTeaser : productTeasers){
+            productTeaser.setDisplayPrice(priceHelper.buildPrice(productTeaser.getPrice()));
         }
-
     }
 
     @Nullable

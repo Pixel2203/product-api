@@ -1,9 +1,11 @@
 package com.example.firstrestapi.service;
 
+import com.example.firstrestapi.DAOs.LanguageDAO;
 import com.example.firstrestapi.DAOs.ProductDAO;
 import com.example.firstrestapi.DAOs.ProductMongoDAO;
 import com.example.firstrestapi.DTOs.*;
 import com.example.firstrestapi.Database.DBManager;
+import com.example.firstrestapi.Database.mysql.tables.ProductTranslationRepository;
 import com.example.firstrestapi.EnvConfig;
 import com.example.firstrestapi.handler.LanguageHandler;
 import com.example.firstrestapi.responses.EventResponse;
@@ -28,8 +30,8 @@ public class ProductService {
     private final ResourceBundleMessageSource messageSource;
 
     @Autowired
-    public ProductService(DBManager dbManager, ProductMongoDAO productMongoDAO, EnvConfig envConfig) {
-        this.languageHandler = LanguageHandler.getInstance();
+    public ProductService(DBManager dbManager, ProductMongoDAO productMongoDAO, EnvConfig envConfig, ProductTranslationRepository productTranslationRepository) {
+        this.languageHandler = new LanguageHandler(new LanguageDAO(productTranslationRepository));
         this.productMongoDAO = productMongoDAO;
 
         ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
@@ -80,8 +82,8 @@ public class ProductService {
      * @param request RegisterProductRequest
      * @return String containing the result
      */
-    public Optional<String> registerProduct(RegisterProductRequest request) {
-        return new ProductDAO().registerProductToDatabase(request);
+    public EventResponse<?> registerProduct(RegisterProductRequest request) {
+        return EventResponse.withoutResult(true, new ProductDAO().registerProductToDatabase(request).get(), ErrorCode.NONE);
     }
 
     /**

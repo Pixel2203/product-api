@@ -1,26 +1,15 @@
 package com.example.firstrestapi.DTOs;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+@AllArgsConstructor
 public class BaseProduct {
-    protected final int id;
-    protected final String teaserImage;
-    protected final int categoryId;
-
-
-    public BaseProduct(int id, String teaserImage, int categoryId) {
-        this.id = id;
-        this.teaserImage = teaserImage;
-        this.categoryId = categoryId;
-    }
-
-    public String getTeaserImage() {
-        return teaserImage;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public int getCategoryId() {
-        return categoryId;
-    }
+    private final int id;
+    private final String teaserImage;
+    private final int categoryId;
+    private final Float price;
 }
