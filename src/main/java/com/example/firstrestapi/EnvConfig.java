@@ -1,11 +1,13 @@
 package com.example.firstrestapi;
 
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 
 @Configuration
-@PropertySource("classpath:config.properties")
+@PropertySource("classpath:application.properties")
+@Getter
 public class EnvConfig {
 
     @Value("${database.user.password}")
@@ -20,20 +22,8 @@ public class EnvConfig {
     @Value("${i18n.default.language}")
     private String defaultLanguage;
 
-    public String getConnectionString() {
-        return connectionString;
-    }
+    @Value("${fallback.language}")
+    private String fallbackLanguage;
 
-    public String getUserName() {
-        return userName;
-    }
-
-    public String getUserPassword() {
-        return userPassword;
-    }
-
-    public String getDefaultLanguage() {
-        return defaultLanguage;
-    }
 
 }

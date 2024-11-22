@@ -1,15 +1,11 @@
 package com.example.firstrestapi.controller;
 
-import com.example.firstrestapi.CHeaders;
-import com.example.firstrestapi.DTOs.RatingContext;
-import com.example.firstrestapi.DTOs.RegisterProductRequest;
+import com.example.firstrestapi.dto.RegisterProductRequest;
 import com.example.firstrestapi.responses.EventResponse;
 import com.example.firstrestapi.service.ProductService;
-import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -32,16 +28,14 @@ public class ProductController {
      * @return
      */
     @GetMapping ("/products/{categoryId}")
-    public EventResponse<?> getProductsByCategory(@PathVariable String categoryId, @RequestParam String language){
-        log.info("Got request to getProductsByCategory for categoryId={} and language={}", categoryId, language);
-        return productService.getProductsByCategoryAndLanguage(categoryId, language);
+    public EventResponse<?> getProductTeasersByCategory(@PathVariable String categoryId){
+        return productService.getProductsByCategoryAndLanguage(categoryId);
     }
 
     @PostMapping("/cart")
-    public EventResponse<?> getProductsInCart(
-            @RequestHeader(CHeaders.LOCALE) String lang,
+    public EventResponse<?> getCartProducts(
             @RequestBody Map<Integer, Integer> productIds){
-        return productService.getProductsByIdsWithFallback(productIds, lang);
+        return productService.getProductsByIdsWithFallback(productIds);
     }
 
     /**
@@ -52,27 +46,14 @@ public class ProductController {
      */
     @GetMapping("/product/{productId}")
     public EventResponse<?> getProductById(
-            @PathVariable int productId,
-            @RequestHeader(value = CHeaders.LOCALE,required = false, defaultValue = "de") String locale,
-            @RequestHeader(value = CHeaders.USERID, required = false) @Nullable Integer userId){
-        return productService.getProductById(productId, locale, userId);
+            @PathVariable int productId){
+        return productService.getProductById(productId);
     }
 
-    @PostMapping("/rate")
-    public EventResponse<?> rateProduct(
-            @RequestBody RatingContext context,
-            @RequestHeader(CHeaders.USERID) int uId,
-            @RequestHeader(CHeaders.LOCALE) String language){
-        return productService.addRatingToProduct(context, uId, language);
-    }
 
-    @DeleteMapping("/rate/{productId}")
-    public EventResponse<?> deleteRating(@RequestHeader(CHeaders.USERID) int uId, @RequestBody String ratingId, @PathVariable int productId){
-       return productService.removeRatingFromProduct(ratingId, uId, productId);
-    }
 
     @PostMapping("/product")
     public EventResponse<?> addProduct(@RequestBody RegisterProductRequest request){
-        return productService.registerProduct(request);
+        return productService.addProduct(request);
     }
 }

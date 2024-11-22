@@ -1,22 +1,28 @@
 package com.example.firstrestapi.Database;
 
 import com.example.firstrestapi.EnvConfig;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.sql.*;
+import java.util.Objects;
+
 @Component
+@RequiredArgsConstructor
 public class DBManager {
     private static final Logger log = LoggerFactory.getLogger(DBManager.class);
-    EnvConfig envConfig;
-    @Autowired
-    public DBManager(EnvConfig envConfig) {
-        this.envConfig = envConfig;
-        this.connect();
-    }
+
+    private final EnvConfig envConfig;
+    @Getter
     private Connection connection;
+
+    @PostConstruct
     public void connect() {
         String url = this.envConfig.getConnectionString();
         String user = this.envConfig.getUserName();
@@ -30,14 +36,19 @@ public class DBManager {
             this.connection = DriverManager.getConnection(url,user,password);
             log.info("Successfully connected to database");
         } catch (SQLException e){
-            log.error("Unable to connect to database", e);
-
+            throw new RuntimeException("Unable to connect to database");
         }
-
-
-
     }
-    public Connection getConnection(){
-        return this.connection;
+
+    @PreDestroy
+    public void closeConnection() {
+        if(Objects.nonNull(this.connection)){
+            try {
+                this.connection.close();
+                log.info("Successfully closed database connection");
+            } catch (SQLException e) {
+                throw new RuntimeException("Unable to close connection to database");
+            }
+        }
     }
 }
