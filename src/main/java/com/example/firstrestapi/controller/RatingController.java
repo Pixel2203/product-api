@@ -2,6 +2,7 @@ package com.example.firstrestapi.controller;
 
 import com.example.firstrestapi.dto.RatingContext;
 import com.example.firstrestapi.permission.AuthorizationToken;
+import com.example.firstrestapi.permission.Permissions;
 import com.example.firstrestapi.permission.RequiresPermission;
 import com.example.firstrestapi.responses.EventResponse;
 import com.example.firstrestapi.service.RatingService;
@@ -17,7 +18,7 @@ public class RatingController {
 
 
     @PostMapping("/rate")
-    @RequiresPermission(requiredPermission = "RATE_PRODUCT")
+    @RequiresPermission(requiredPermission = Permissions.RATE_PRODUCT)
     public EventResponse<?> rateProduct(
             @RequestBody RatingContext context,
             @AuthorizationToken
@@ -26,7 +27,7 @@ public class RatingController {
     }
 
     @DeleteMapping("/rate/{productId}")
-    @RequiresPermission(requiredPermission = "DELETE_OWN_PRODUCT")
+    @RequiresPermission(requiredPermission = Permissions.REMOVE_RATING)
     public EventResponse<?> deleteRating(@RequestBody String ratingId,
                                          @PathVariable int productId){
         return ratingService.removeRatingFromProduct(ratingId, productId);

@@ -1,41 +1,54 @@
 package com.example.firstrestapi.handler;
 
+import com.example.firstrestapi.Database.mysql.models.ProductTranslationModel;
 import com.example.firstrestapi.dao.LanguageDAO;
 import com.example.firstrestapi.dto.ProductTeaser;
+import com.example.firstrestapi.util.PriceHelper;
 import com.mysql.cj.util.StringUtils;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import static com.example.firstrestapi.handler.LanguageHandler.fallbackLanguage;
 
 @RequiredArgsConstructor
 public class FallbackHandler {
-    private static final Logger log = LoggerFactory.getLogger(FallbackHandler.class);
     private final LanguageDAO languageDAO;
     private final DetailHandler detailHandler = new DetailHandler();
 
 
     public void injectDisplayPriceAndDisplayNameWithFallback(ProductTeaser productTeaser, String languageId) {
-        languageDAO.injectDisplayPrice(productTeaser,languageId);
-        languageDAO.injectDisplayName(productTeaser,languageId);
 
-        ProductTeaser fallbackProduct = ProductTeaser.copyFrom(productTeaser);
-
-
-        languageDAO.injectDisplayPrice(fallbackProduct, fallbackLanguage);
-        languageDAO.injectDisplayName(fallbackProduct, fallbackLanguage);
-
+        this.injectDisplayPriceWithFallback(productTeaser, languageId);
+        this.injectDisplayNameAndModel(productTeaser, languageId);
 
         if(StringUtils.isNullOrEmpty(productTeaser.getDisplayName())){
-            productTeaser.setDisplayName(fallbackProduct.getDisplayName());
+            this.injectDisplayNameAndModel(productTeaser, fallbackLanguage);
         }
-        if(StringUtils.isNullOrEmpty(productTeaser.getDisplayPrice())){
-            productTeaser.setDisplayPrice(fallbackProduct.getDisplayPrice());
-        }
+    }
 
+    public void injectDisplayNameAndModel(ProductTeaser productTeaser, String languageId) {
+        Optional<ProductTranslationModel> translationModel = languageDAO.getProductTranslationModel(productTeaser.getId(),languageId);
+        translationModel.ifPresent(productTranslationModel -> {
+            productTeaser.setDisplayName(productTranslationModel.getDisplayName());
+            productTeaser.setLanguageModel(languageId);
+        });
+    }
+
+    public void injectDisplayPriceWithFallback(ProductTeaser productTeaser, String languageId) {
+        PriceHelper priceHelper = languageDAO.getPriceInformationForLanguage(languageId);
+        if(Objects.isNull(priceHelper)){
+            priceHelper = languageDAO.getPriceInformationForLanguage(fallbackLanguage);
+
+            if(Objects.isNull(priceHelper)){
+                priceHelper = PriceHelper.Default();
+            }
+        }
+        productTeaser.setDisplayPrice(priceHelper.buildPrice(productTeaser.getPrice()));
     }
 
     public void injectProductDetailsWithFallback(ProductTeaser teaser, String languageId) {

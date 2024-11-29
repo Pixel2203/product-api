@@ -2,12 +2,13 @@ package com.example.firstrestapi.dao;
 
 import com.example.firstrestapi.Database.DBManager;
 import com.example.firstrestapi.Database.mysql.ProductTranslationRepository;
+import com.example.firstrestapi.Database.mysql.models.ProductTranslationModel;
 import com.example.firstrestapi.dto.ProductDetail;
-import com.example.firstrestapi.dto.ProductTeaser;
 import com.example.firstrestapi.util.PriceHelper;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +18,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 public class LanguageDAO {
@@ -25,22 +27,8 @@ public class LanguageDAO {
     private final ProductTranslationRepository productTranslationRepository;
     private final DBManager dbManager;
 
-    public void injectDisplayName(ProductTeaser teaser, String languageId){
-        productTranslationRepository.findProductTranslationModelByProductIdAndLanguageId(teaser.getId(), languageId).ifPresent(productTranslationModel -> {
-            teaser.setDisplayName(productTranslationModel.getDisplayName());
-            teaser.setLanguageModel(languageId);
-        });
-    }
-
-    public void injectDisplayPrice(ProductTeaser teaser, String languageId){
-        PriceHelper priceHelper = getPriceInformationForLanguage(languageId);
-        if(Objects.isNull(priceHelper)){
-            priceHelper = new PriceHelper("", "€", false);
-        }
-
-
-        teaser.setDisplayPrice(priceHelper.buildPrice(teaser.getPrice()));
-
+    public Optional<ProductTranslationModel> getProductTranslationModel(int teaserId, String languageId){
+        return productTranslationRepository.findProductTranslationModelByProductIdAndLanguageId(teaserId, languageId);
     }
 
 

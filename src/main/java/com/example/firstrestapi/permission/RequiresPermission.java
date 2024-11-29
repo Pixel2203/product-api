@@ -13,5 +13,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Nullable
 public @interface RequiresPermission {
-  @NotNull String requiredPermission();
+  @NotNull Permissions requiredPermission();
 }

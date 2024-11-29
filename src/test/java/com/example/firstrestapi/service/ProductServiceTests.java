@@ -1,9 +1,8 @@
 package com.example.firstrestapi.service;
 
+import com.example.firstrestapi.ResponseObjects.ProductyByCategoryResponse;
 import com.example.firstrestapi.TestData;
-import com.example.firstrestapi.dto.ProductLanguageTranslation;
-import com.example.firstrestapi.dto.ProductTeaser;
-import com.example.firstrestapi.dto.RegisterProductRequest;
+import com.example.firstrestapi.dto.*;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -24,6 +23,7 @@ public class ProductServiceTests {
     @Autowired
     private ProductService productService;
 
+    private static Integer registeredProductId;
 
 
 
@@ -43,6 +43,7 @@ public class ProductServiceTests {
 
         var response = productService.addProduct(request);
         assert response.success();
+
     }
 
     @Test
@@ -50,14 +51,28 @@ public class ProductServiceTests {
     public void getTestProduct() {
         productService.getRequestContext().setLocale("en");
         var foundProducts = productService.getProductsByCategoryAndLanguage(TestData.Category.LAPTOP);
-
         assert foundProducts.success();
-        List<ProductTeaser> products = (List<ProductTeaser>) foundProducts.result();
-        assert Objects.nonNull(products);
-        assert products.size() == 1;
+        var response = (ProductyByCategoryResponse) foundProducts.result();
+        assert Objects.nonNull(response);
+        List<ProductTeaser> products = response.products();
+
 
         var product = products.get(0);
         assert product.getPrice() == 1600.00f;
+        registeredProductId = product.getId();
+    }
+
+    @Test
+    @Order(3)
+    public void testTestProductDetailsTranslationFallback() {
+        productService.getRequestContext().setLocale("de");
+        var requestedProduct =  productService.getProductById(registeredProductId);
+        assert requestedProduct.success();
+        var foundProduct = (Product) requestedProduct.result();
+        assert Objects.nonNull(foundProduct);
+        List<ProductDetail> translatedProductDetails = foundProduct.getDetails();
+
+        assert translatedProductDetails.equals(TestData.ProductLanguageTranslations.SAMPLE_TRANSLATION_EN.details());
     }
 
 }

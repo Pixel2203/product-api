@@ -1,6 +1,8 @@
 package com.example.firstrestapi.controller;
 
 import com.example.firstrestapi.dto.RegisterProductRequest;
+import com.example.firstrestapi.permission.Permissions;
+import com.example.firstrestapi.permission.RequiresPermission;
 import com.example.firstrestapi.responses.EventResponse;
 import com.example.firstrestapi.service.ProductService;
 import org.slf4j.Logger;
@@ -42,7 +44,6 @@ public class ProductController {
      * Returns a Product Object for the given productId
      * @param productId ProductId of the wanted product from the database
      * @param locale Desired Language of the product
-     * @return
      */
     @GetMapping("/product/{productId}")
     public EventResponse<?> getProductById(
@@ -53,6 +54,7 @@ public class ProductController {
 
 
     @PostMapping("/product")
+    @RequiresPermission(requiredPermission = Permissions.ADD_PRODUCT)
     public EventResponse<?> addProduct(@RequestBody RegisterProductRequest request){
         return productService.addProduct(request);
     }

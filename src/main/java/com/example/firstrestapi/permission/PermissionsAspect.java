@@ -14,15 +14,12 @@ import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -47,7 +44,7 @@ public class PermissionsAspect {
     }
 
 
-    String requiredPermission = requiresPermission.requiredPermission();
+    Permissions requiredPermission = requiresPermission.requiredPermission();
 
 
     Algorithm algorithm = Algorithm.HMAC256("MYKEY");
@@ -57,7 +54,8 @@ public class PermissionsAspect {
 
       DecodedJWT jwt = verifier.verify(token);
       String[] permissions = jwt.getClaim("permissions").asArray(String.class);
-      boolean hasPermission = Arrays.asList(permissions).contains(requiredPermission);
+      boolean hasPermission = PermissionHelper.hasPermission(permissions, requiredPermission);
+
 
       if (!hasPermission) {
         return EventResponse.failed("Insufficient Permissions", ErrorCode.INSUFFICIENT_PERMISSIONS);

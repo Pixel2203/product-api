@@ -9,7 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 public class PriceHelperTests {
   @Test
   void correctDisplayPriceTestEuro() {
-    PriceHelper priceHelperEuro = new PriceHelper(Strings.EMPTY, "€", false);
+    PriceHelper priceHelperEuro = PriceHelper.Default();
     float[] testPrices = {300.99f,300f,300.1f};
     String[] expectation = {"300,99€", "300,00€", "300,10€"};
 
@@ -29,4 +29,6 @@ public class PriceHelperTests {
     }
 
   }
+
+
 }

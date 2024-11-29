@@ -3,6 +3,7 @@ import com.example.firstrestapi.dao.LanguageDAO;
 import com.example.firstrestapi.dto.ProductTeaser;
 import com.example.firstrestapi.Database.mysql.models.BaseProductModel;
 import com.example.firstrestapi.util.PriceHelper;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -37,7 +38,7 @@ public class LanguageHandler {
     }
 
 
-
+    @Nullable
     public PriceHelper getPriceHelperByLanguage(String language){
         return languageDAO.getPriceInformationForLanguage(language);
     }

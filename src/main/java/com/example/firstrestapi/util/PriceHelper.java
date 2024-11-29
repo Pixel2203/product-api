@@ -33,4 +33,8 @@ public class PriceHelper {
         }
         return displayPrice;
     }
+
+    public static PriceHelper Default(){
+        return new PriceHelper("", "€", false);
+    }
 }

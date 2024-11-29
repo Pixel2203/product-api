@@ -113,6 +113,7 @@ public class ProductService extends CService{
         cartProductsWithoutTotalPrice.forEach(cartProduct -> {
             String languageModel = cartProduct.getProduct().getLanguageModel();
             PriceHelper helper = languageHandler.getPriceHelperByLanguage(languageModel);
+            if(Objects.isNull(helper)) helper = PriceHelper.Default();
             cartProduct.formatTotalDisplayPrice(helper);
         });
         return new EventResponse<>(true, "Found them!" , cartProductsWithoutTotalPrice, ErrorCode.NONE);

@@ -5,6 +5,7 @@ import com.mysql.cj.util.StringUtils;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.annotation.Id;
@@ -35,8 +36,7 @@ public class ExtendedProductInfoModel {
         return ratings;
     }
 
-    public ExtendedProductInfoModel(String id, int productId, List<String> images, List<Rating> ratings) {
-        this.id = id;
+    public ExtendedProductInfoModel(int productId, List<String> images, List<Rating> ratings) {
         if(Objects.isNull(images)) {
             this.images = new ArrayList<>();
         }else {
@@ -50,6 +50,10 @@ public class ExtendedProductInfoModel {
         }
 
         this.productId = productId;
+    }
+
+    public static ExtendedProductInfoModel template(@NotNull Integer productId){
+        return new ExtendedProductInfoModel(productId, new ArrayList<>(), new ArrayList<>());
     }
 
     public boolean addRating(Rating rating) {

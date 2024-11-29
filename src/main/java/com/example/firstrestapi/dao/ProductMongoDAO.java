@@ -54,7 +54,7 @@ public class ProductMongoDAO {
         var info = getExtendedProductInfoByProductId(context.productId());
         ExtendedProductInfoModel eInfo;
         if(info.isEmpty()) {
-            eInfo = new ExtendedProductInfoModel("", context.productId(), null, null);
+            eInfo = ExtendedProductInfoModel.template(context.productId());
             eInfo.addRating(context.rating());
             productRepository.save(eInfo);
             return ErrorCode.NONE;

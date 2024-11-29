@@ -3,6 +3,7 @@ package com.example.firstrestapi.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 @Getter
 
@@ -21,6 +22,8 @@ public class Product extends ProductTeaser {
                 productTeaser.getDisplayPrice(),
                 productTeaser.getDetails()
         );
+        this.images = new ArrayList<>();
+        this.ratings = new ArrayList<>();
     }
 
     public void setRatings(List<Rating> ratings) {
