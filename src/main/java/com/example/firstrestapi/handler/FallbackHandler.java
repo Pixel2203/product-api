@@ -15,13 +15,16 @@ import java.util.Optional;
 
 import static com.example.firstrestapi.handler.LanguageHandler.fallbackLanguage;
 
-@RequiredArgsConstructor
 public class FallbackHandler {
     private final LanguageDAO languageDAO;
-    private final DetailHandler detailHandler = new DetailHandler();
+    private final DetailHandler detailHandler;
 
+    public FallbackHandler(LanguageDAO languageDAO) {
+        this.languageDAO = languageDAO;
+        this.detailHandler = new DetailHandler();
+    }
 
-    public void injectDisplayPriceAndDisplayNameWithFallback(ProductTeaser productTeaser, String languageId) {
+    public void injectDisplayPriceAndDisplayNameWithFallback(@NotNull ProductTeaser productTeaser, String languageId) {
 
         this.injectDisplayPriceWithFallback(productTeaser, languageId);
         this.injectDisplayNameAndModel(productTeaser, languageId);
